@@ -1,0 +1,9 @@
+/obj/*
+/bin/*
+/tools/*
+/libs/*
+#*#
+*~
+tags
+cscope*
+*.swp
