@@ -18,4 +18,16 @@
 #ifndef	NETWORK_H_INCLUDE
 #define	NETWORK_H_INCLUDE
 
+#include "../common/common.h"
+
+#define	NETWORK_READY		0
+#define	NETWORK_NOTREADY	1
+#define	NETWORK_RUNNING		2
+
+void			network_init();
+bool			network_start();
+void			network_stop();
+void			network_destroy();
+unsigned int	network_status();
+
 #endif	//!	NETWORK_H_INCLUDE

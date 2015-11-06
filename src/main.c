@@ -17,5 +17,10 @@
 
 int main(int argc, char* argv[])
 {
+	//Initialize logging
+	//Change to daemon process
+	//Initialize server
+	//Initialize network
+	//Server main
 	return 0;
 }

@@ -14,16 +14,3 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
-#ifndef	LOG_H_INCLUDE
-#define	LOG_H_INCLUDE
-
-#include "../common/common.h"
-
-#define	LOG_SERVER	0
-#define	LOG_CONN	1
-
-bool	log_init();
-void	printlog(int log, char* fmt, ...);
-
-#endif	//!	LOG_H_INCLUDE

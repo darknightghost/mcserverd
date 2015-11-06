@@ -15,15 +15,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef	LOG_H_INCLUDE
-#define	LOG_H_INCLUDE
+#ifndef COMMON_H_INCLUDE
+#define	COMMON_H_INCLUDE
 
-#include "../common/common.h"
+#ifndef	bool
 
-#define	LOG_SERVER	0
-#define	LOG_CONN	1
+	typedef	int		bool;
+	#define	true	1
+	#define	false	0
 
-bool	log_init();
-void	printlog(int log, char* fmt, ...);
+#endif	//!	bool
 
-#endif	//!	LOG_H_INCLUDE
+#include "list.h"
+#include "queue.h"
+
+#endif	//!	COMMON_H_INCLUDE

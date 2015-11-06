@@ -18,6 +18,7 @@
 #ifndef SESSION_H_INCLODE
 #define	SESSION_H_INCLUDE
 
+#include "../common/common.h"
 #include "ssh.h"
 
 typedef struct _session_t {
@@ -25,6 +26,7 @@ typedef struct _session_t {
 	ssh_session	session;
 	ssh_event	event;
 	ssh_channel	channel;
+	int			status;
 } session_t, *psession_t;
 
 psession_t	session_new();
