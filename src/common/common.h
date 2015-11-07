@@ -18,6 +18,8 @@
 #ifndef COMMON_H_INCLUDE
 #define	COMMON_H_INCLUDE
 
+#define	UNREFERRED_PARAMETER(x)		((void)(x))
+
 #ifndef	bool
 
 	typedef	int		bool;

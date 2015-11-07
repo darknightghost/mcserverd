@@ -20,29 +20,59 @@
 
 #include "../common/common.h"
 
+#define		INI_LINE_SECTION	0
+#define		INI_LINE_KEY		1
+#define		INI_LINE_COMMENT	2
+
+typedef	struct	_ini_line {
+	int	type;
+} ini_line_t, *pini_line_t;
+
 typedef	struct	_ini_key {
-	char*			key_name;
-	char*			value;
-} ini_key, *pini_key;
+	ini_line_t	line;
+	char*		key_name;
+	char*		value;
+} ini_key_t, *pini_key_t;
 
 typedef	struct	_ini_section {
-	char*	section_name;
-	list_t	keys;
-} ini_section, *pini_section;
+	ini_line_t	line;
+	char*		section_name;
+	list_t		keys;
+} ini_section_t, *pini_section_t;
+
+typedef	struct	_ini_comment {
+	ini_line_t	line;
+	char*		comment;
+} ini_comment_t, *pini_comment_t;
 
 typedef struct	_ini_file_info {
+	char*	path;
 	list_t	sections;
-} ini_file_info, *pini_file_info;
+	FILE*	fp;
+} ini_file_info_t, *pini_file_info_t;
 
+//Load file data
 pini_file_info		ini_open(char* path);
 
 //Return the size of value.If the size > buf_size,
 //you should get the value wth a bigger buf again.
-size_t				ini_get_key_value(pini_file_info p_file,
+//If the key does not exists,the key wiil be create.
+size_t				ini_get_key_value(pini_file_info_t p_file,
                                       char* section,
                                       char* key,
                                       char* buf,
                                       size_t buf_size);
+
+//If value == NULL,the key will be removed
+void				ini_set_key_value(pini_file_info_t p_file,
+                                      char* section,
+                                      char* key,
+                                      char* value);
+
+//Wrte ini file
+bool				ini_sync(pini_file_info p_file);
+
+//Free file data
 void				ini_close(pini_file_info p_file);
 
 #endif	//!	INI_H_INCLUDE
