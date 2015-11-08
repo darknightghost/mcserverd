@@ -15,7 +15,54 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+An sample of config file
+
+[minecraft]
+command=java -Xms1024M -Xmx1024M -jar minecraft_server.jar nogui
+
+[ssh]
+port=2048
+username=admin
+password=admin
+max_connection=5
+
+
+*/
+
 #ifndef	CONFIG_H_INCLUDE
 #define	CONFIG_H_INCLUDE
+
+#define	MAX_USERNAME_LEN		15
+#define	MAX_PASSWD_LEN			31
+
+#define	CFG_OPEN_SUCCESS		0
+#define	CFG_OPEN_FAILED			1
+#define	CFG_OPEN_EAGAIN			2
+
+bool				cfg_init();
+void				cfg_destroy();
+
+//Write config file
+bool				cfg_write();
+
+//Server command line
+size_t				cfg_get_mcserver_cmd_line(char* buf, size_t buf_size);
+
+//SSH port
+unsigned short		cfg_get_port();
+void				cfg_set_port();
+
+//Login username
+size_t				cfg_get_username(char* buf, size_t buf_size);
+void				cfg_set_username(char* username);
+
+//SSH password
+size_t				cfg_get_passwd(char* buf, size_t buf_size);
+void				cfg_set_passwd(char* passwd);
+
+//Maxium number of login users
+int					cfg_get_max_connect();
+void				cfg_set_max_connect(int num);
 
 #endif	//!	CONFIG_H_INCLUDE
