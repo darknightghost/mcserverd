@@ -22,7 +22,7 @@
 #include "ini.h"
 #include "config.h"
 
-#define	CFG_FILE			"./mcserverd.conf"
+#define	CFG_FILE			"/etc/mcserverd.conf"
 #define	DEFAULT_USERNAME	"admin"
 #define	DEFAULT_PASSWD		"admin"
 
