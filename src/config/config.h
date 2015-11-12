@@ -33,6 +33,8 @@ max_connection=5
 #ifndef	CONFIG_H_INCLUDE
 #define	CONFIG_H_INCLUDE
 
+#include "../common/common.h"
+
 #define	MAX_USERNAME_LEN		15
 #define	MAX_PASSWD_LEN			31
 

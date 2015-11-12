@@ -15,7 +15,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "list.h"
+#include "common.h"
 #include <stdlib.h>
 
 plist_node_t list_insert_before(
@@ -155,7 +155,7 @@ void list_destroy(plist_t p_list,
 			callback((*p_list)->p_item, p_arg);
 		}
 
-		rtl_list_remove(p_list, *p_list);
+		list_remove(p_list, *p_list);
 	}
 
 	return;

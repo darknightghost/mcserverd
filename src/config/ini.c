@@ -23,7 +23,7 @@
 static	bool			read_buf_line(FILE* fp, char** p_buf, size_t* p_len);
 static	void			jump_space(char**p);
 static	bool			analyse_line(pini_file_info_t p_ini_file,
-                                     char* line, pini_section_t* p_p_setcion)
+                                     char* line, pini_section_t* p_p_section);
 static	pini_section_t	get_section(pini_file_info_t p_ini_file, char* section,
                                     bool create);
 static	pini_key_t		get_key(pini_section_t p_section, char* key,
@@ -32,7 +32,7 @@ static	void			add_comment(plist_t p_list, char* comment);
 static	void			section_destroy_callback(void* p_item, void* args);
 static	void			key_destroy_callback(void* p_item, void* args);
 
-pini_file_info ini_open(char* path)
+pini_file_info_t ini_open(char* path)
 {
 	pini_file_info_t p_info;
 	char* line_buf;
@@ -59,7 +59,7 @@ pini_file_info ini_open(char* path)
 	p_section = NULL;
 
 	while(read_buf_line(p_info->fp, &line_buf, &len)) {
-		if(!analyse_line(p_info, line_buf, p_section)) {
+		if(!analyse_line(p_info, line_buf, &p_section)) {
 			ini_close(p_info);
 			return NULL;
 		}
@@ -135,12 +135,12 @@ void ini_set_key_value(pini_file_info_t p_file,
 
 		if(p_node != NULL) {
 			do {
-				p_key = p_nod->p_item;
+				p_key = p_node->p_item;
 
 				if(strcmp(p_key->key_name, key) == 0) {
 					list_remove(&(p_section->keys), p_node);
 
-					if(p_key->Value != NULL) {
+					if(p_key->value != NULL) {
 						free(p_key->value);
 					}
 
@@ -157,7 +157,7 @@ void ini_set_key_value(pini_file_info_t p_file,
 	return;
 }
 
-bool ini_sync(pini_file_info p_file)
+bool ini_sync(pini_file_info_t p_file)
 {
 	plist_node_t p_sec_node;
 	plist_node_t p_key_node;
@@ -198,7 +198,7 @@ bool ini_sync(pini_file_info p_file)
 						if(p_key->line.type == INI_LINE_KEY) {
 							//Write key
 							fprintf(p_file->fp, "%s=%s\n",
-							        p_key->key_name, p_key->valuse);
+							        p_key->key_name, p_key->value);
 
 						} else if(p_key->line.type == INI_LINE_COMMENT) {
 							//Write comment
@@ -225,7 +225,7 @@ bool ini_sync(pini_file_info p_file)
 	return true;
 }
 
-void ini_close(pini_file_info p_file)
+void ini_close(pini_file_info_t p_file)
 {
 	list_destroy(&(p_file->sections), section_destroy_callback, NULL);
 	free(p_file->path);
@@ -286,7 +286,7 @@ void jump_space(char**p)
 }
 
 bool analyse_line(pini_file_info_t p_ini_file,
-                  char* line, pini_section_t* p_p_setcion)
+                  char* line, pini_section_t* p_p_section)
 {
 	char* p;
 	char* p_end;
@@ -300,7 +300,7 @@ bool analyse_line(pini_file_info_t p_ini_file,
 
 	} else if(*p == '[') {
 		//Section
-		for(p_end = p; *p_end != ']', p_end++) {
+		for(p_end = p; *p_end != ']'; p_end++) {
 			if(*p_end == '\0' || *p_end == ';' || *p_end == '['
 			   || *p_end == '=') {
 				return false;
@@ -318,12 +318,12 @@ bool analyse_line(pini_file_info_t p_ini_file,
 			add_comment(&(p_ini_file->sections), p);
 
 		} else {
-			add_comment(&((*p_p_setcion)->keys), p);
+			add_comment(&((*p_p_section)->keys), p);
 		}
 
 	} else if(*p != ';' && *p != '=' && *p != '[' && *p != ']') {
 		//Key
-		if(*p_p_setcion == NULL) {
+		if(*p_p_section == NULL) {
 			return false;
 		}
 
@@ -336,7 +336,7 @@ bool analyse_line(pini_file_info_t p_ini_file,
 		}
 
 		//Value
-		if(p_end != '=') {
+		if(*p_end != '=') {
 			*p_end = '\0';
 			jump_space(&p_end);
 
@@ -358,7 +358,7 @@ bool analyse_line(pini_file_info_t p_ini_file,
 			return false;
 		}
 
-		p_key = get_key(*p_p_setcion, p, true);
+		p_key = get_key(*p_p_section, p, true);
 
 		//Set value
 		p = p_end;
@@ -405,7 +405,7 @@ pini_section_t get_section(pini_file_info_t p_ini_file, char* section,
 
 	if(ret == NULL && create) {
 		//Create new section
-		ret = malloc(ini_section_t);
+		ret = malloc(sizeof(ini_section_t));
 		ret->section_name = malloc(strlen(section) + 1);
 		ret->line.type = INI_LINE_SECTION;
 		strcpy(ret->section_name, section);
@@ -425,7 +425,7 @@ pini_key_t get_key(pini_section_t p_section, char* key, bool create)
 	ret = NULL;
 
 	//Look for key
-	p_node = p_key->keys;
+	p_node = p_section->keys;
 
 	if(p_node != NULL) {
 		do {
@@ -443,7 +443,7 @@ pini_key_t get_key(pini_section_t p_section, char* key, bool create)
 
 	if(ret == NULL && create) {
 		//Create new section
-		ret = malloc(ini_key_t);
+		ret = malloc(sizeof(ini_key_t));
 		ret->key_name = malloc(strlen(key) + 1);
 		ret->line.type = INI_LINE_KEY;
 		strcpy(ret->key_name, key);

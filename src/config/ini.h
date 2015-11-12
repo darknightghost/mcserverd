@@ -19,6 +19,7 @@
 #define	INI_H_INCLUDE
 
 #include "../common/common.h"
+#include <stdio.h>
 
 #define		INI_LINE_SECTION	0
 #define		INI_LINE_KEY		1
@@ -52,7 +53,7 @@ typedef struct	_ini_file_info {
 } ini_file_info_t, *pini_file_info_t;
 
 //Load file data
-pini_file_info		ini_open(char* path);
+pini_file_info_t		ini_open(char* path);
 
 //Return the size of value.If the size > buf_size,
 //you should get the value wth a bigger buf again.
@@ -70,9 +71,9 @@ void				ini_set_key_value(pini_file_info_t p_file,
                                       char* value);
 
 //Wrte ini file
-bool				ini_sync(pini_file_info p_file);
+bool				ini_sync(pini_file_info_t p_file);
 
 //Free file data
-void				ini_close(pini_file_info p_file);
+void				ini_close(pini_file_info_t p_file);
 
 #endif	//!	INI_H_INCLUDE

@@ -23,7 +23,7 @@
 
 #include "./config/config.h"
 
-#define	LOCK_FILE	"./.mcserverd.lck
+#define	LOCK_FILE	"./.mcserverd.lck"
 
 static	void	run_as_daemon();
 
@@ -38,20 +38,22 @@ int main(int argc, char* argv[])
 	}
 
 	//Check lock
-	lock_fd=open(LOCK_FILE,O_CREAT|O_RDWR,S_IRUSR|S_IWUSR);
-	if(lock_fd==-1){
+	lock_fd = open(LOCK_FILE, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+
+	if(lock_fd == -1) {
 		printf("Unable to open lock file!\n");
 		return -1;
 	}
-	if(lockf(lock_fd,F_TLOCK,0)!=0){
+
+	if(lockf(lock_fd, F_TLOCK, 0) != 0) {
 		close(lock_fd);
 		return 0;
 	}
 
 	//Load config file
-	if(!cfg_init){
+	if(!cfg_init) {
 		printf("Failed to load config file!\n");
-		lockf(lock_fd,F_ULOCK,0);
+		lockf(lock_fd, F_ULOCK, 0);
 		close(lock_fd);
 		return -1;
 	}
@@ -63,7 +65,7 @@ int main(int argc, char* argv[])
 	//Server main
 
 	cfg_destroy();
-	lockf(lock_fd,F_ULOCK,0);
+	lockf(lock_fd, F_ULOCK, 0);
 	close(lock_fd);
 
 	return 0;

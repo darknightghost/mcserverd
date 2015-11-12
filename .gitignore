@@ -7,3 +7,7 @@
 tags
 cscope*
 *.swp
+Makefile
+.deps/*
+.dirstamp
+*.Po

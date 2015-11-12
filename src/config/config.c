@@ -18,6 +18,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "ini.h"
 #include "config.h"
@@ -75,7 +76,7 @@ bool cfg_init()
 	                        buf, buf_len);
 
 	if(len != 0) {
-		if(len > buflen) {
+		if(len > buf_len) {
 			free(buf);
 			buf_len = len;
 			buf = malloc(buf_len);
@@ -119,7 +120,7 @@ bool cfg_init()
 	                        buf, buf_len);
 
 	if(len != 0) {
-		if(len > buflen) {
+		if(len > buf_len) {
 			free(buf);
 			buf_len = len;
 			buf = malloc(buf_len);
@@ -127,7 +128,7 @@ bool cfg_init()
 			                  buf, buf_len);
 		}
 
-		max_connection = atoi(buf);
+		max_connect = atoi(buf);
 	}
 
 	free(buf);
