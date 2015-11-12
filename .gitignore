@@ -11,3 +11,5 @@ Makefile
 .deps/*
 .dirstamp
 *.Po
+autom4te.cache/*
+
