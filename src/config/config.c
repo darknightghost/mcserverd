@@ -24,14 +24,12 @@
 #include "config.h"
 
 #define	CFG_FILE			"/etc/mcserverd.conf"
-#define	DEFAULT_USERNAME	"admin"
-#define	DEFAULT_PASSWD		"admin"
 
 static	char*				mcserver_cmd_line = NULL;
-static	unsigned short		port = 2048;
-static	char*				username = NULL;
-static	char*				passwd = NULL;
-static	int					max_connect = 5;
+static	unsigned short		port;
+static	char*				username;
+static	char*				passwd;
+static	int					max_connect;
 static	pini_file_info_t	p_cfg_file = NULL;
 
 
@@ -85,6 +83,10 @@ bool cfg_init()
 		}
 
 		port = (unsigned short)atoi(buf);
+
+	} else {
+		ini_close(p_cfg_file);
+		return false;
 	}
 
 	//Username
@@ -96,9 +98,9 @@ bool cfg_init()
 		ini_get_key_value(p_cfg_file, "ssh", "username",
 		                  username, len);
 
-	} else {
-		username = malloc(strlen(DEFAULT_USERNAME) + 1);
-		strcpy(username, DEFAULT_USERNAME);
+	}  else {
+		ini_close(p_cfg_file);
+		return false;
 	}
 
 	//Password
@@ -110,9 +112,9 @@ bool cfg_init()
 		ini_get_key_value(p_cfg_file, "ssh", "password",
 		                  username, len);
 
-	} else {
-		passwd = malloc(strlen(DEFAULT_PASSWD) + 1);
-		strcpy(passwd, DEFAULT_PASSWD);
+	}  else {
+		ini_close(p_cfg_file);
+		return false;
 	}
 
 	//Max connection
@@ -129,7 +131,12 @@ bool cfg_init()
 		}
 
 		max_connect = atoi(buf);
+
+	} else {
+		ini_close(p_cfg_file);
+		return false;
 	}
+
 
 	free(buf);
 

@@ -24,6 +24,7 @@
 #define		INI_LINE_SECTION	0
 #define		INI_LINE_KEY		1
 #define		INI_LINE_COMMENT	2
+#define		INI_LINE_BLANK		3
 
 typedef	struct	_ini_line {
 	int	type;

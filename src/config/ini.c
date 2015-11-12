@@ -29,6 +29,7 @@ static	pini_section_t	get_section(pini_file_info_t p_ini_file, char* section,
 static	pini_key_t		get_key(pini_section_t p_section, char* key,
                                 bool create);
 static	void			add_comment(plist_t p_list, char* comment);
+static	void			add_blank(plist_t p_list);
 static	void			section_destroy_callback(void* p_item, void* args);
 static	void			key_destroy_callback(void* p_item, void* args);
 
@@ -204,6 +205,9 @@ bool ini_sync(pini_file_info_t p_file)
 							//Write comment
 							p_comment = p_key_node->p_item;
 							fprintf(p_file->fp, ";%s\n", p_comment->comment);
+
+						} else if(p_key->line.type == INI_LINE_BLANK) {
+							fprintf(p_file->fp, "\n");
 						}
 
 						p_key_node = p_key_node->p_next;
@@ -214,7 +218,11 @@ bool ini_sync(pini_file_info_t p_file)
 				//Write comment
 				p_comment = p_sec_node->p_item;
 				fprintf(p_file->fp, ";%s\n", p_comment->comment);
+
+			} else if(p_key->line.type == INI_LINE_BLANK) {
+				fprintf(p_file->fp, "\n");
 			}
+
 
 			p_sec_node = p_sec_node->p_next;
 		} while(p_sec_node != p_file->sections);
@@ -279,7 +287,7 @@ void jump_space(char**p)
 {
 	while(**p == ' '
 	      ||**p == '\t') {
-		(**p)++;
+		(*p)++;
 	}
 
 	return;
@@ -296,10 +304,19 @@ bool analyse_line(pini_file_info_t p_ini_file,
 	jump_space(&p);
 
 	if(*p == '\0') {
+		if(*p_p_section == NULL) {
+			add_blank(&(p_ini_file->sections));
+
+		} else {
+			add_blank(&((*p_p_section)->keys));
+		}
+
 		return true;
 
 	} else if(*p == '[') {
 		//Section
+		p++;
+
 		for(p_end = p; *p_end != ']'; p_end++) {
 			if(*p_end == '\0' || *p_end == ';' || *p_end == '['
 			   || *p_end == '=') {
@@ -339,6 +356,7 @@ bool analyse_line(pini_file_info_t p_ini_file,
 		if(*p_end != '=') {
 			*p_end = '\0';
 			jump_space(&p_end);
+			p_end++;
 
 			if(*p_end != '=') {
 				return false;
@@ -354,7 +372,7 @@ bool analyse_line(pini_file_info_t p_ini_file,
 		jump_space(&p_end);
 
 		//Get key
-		if(*p = '\0') {
+		if(*p == '\0') {
 			return false;
 		}
 
@@ -394,7 +412,7 @@ pini_section_t get_section(pini_file_info_t p_ini_file, char* section,
 			p_sec = p_node->p_item;
 
 			if(p_sec->line.type == INI_LINE_SECTION
-			   || strcmp(p_sec->section_name, section) == 0) {
+			   && strcmp(p_sec->section_name, section) == 0) {
 				ret = p_sec;
 				break;
 			}
@@ -464,6 +482,17 @@ void add_comment(plist_t p_list, char* comment)
 	strcpy(p_comment->comment, comment);
 
 	list_insert_after(p_list, NULL, p_comment);
+	return;
+}
+
+void add_blank(plist_t p_list)
+{
+	pini_line_t p_line;
+
+	p_line = malloc(sizeof(ini_line_t));
+	p_line->type = INI_LINE_BLANK;
+
+	list_insert_after(p_list, NULL, p_line);
 	return;
 }
 

@@ -23,7 +23,7 @@
 
 #include "./config/config.h"
 
-#define	LOCK_FILE	"./.mcserverd.lck"
+#define	LOCK_FILE	"/tmp/mcserverd.lck"
 
 static	void	run_as_daemon();
 
@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Load config file
-	if(!cfg_init) {
+	if(!cfg_init()) {
 		printf("Failed to load config file!\n");
 		lockf(lock_fd, F_ULOCK, 0);
 		close(lock_fd);
