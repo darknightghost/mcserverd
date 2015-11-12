@@ -12,4 +12,4 @@ Makefile
 .dirstamp
 *.Po
 autom4te.cache/*
-
+config.log
