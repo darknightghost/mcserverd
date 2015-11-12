@@ -13,3 +13,5 @@ Makefile
 *.Po
 autom4te.cache/*
 config.log
+*.o
+src/mcserverd
