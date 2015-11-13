@@ -24,6 +24,7 @@
 #define	LOG_CONN	1
 
 bool	log_init();
+void	log_close();
 void	printlog(int log, char* fmt, ...);
 
 #endif	//!	LOG_H_INCLUDE

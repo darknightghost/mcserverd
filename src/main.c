@@ -59,7 +59,17 @@ int main(int argc, char* argv[])
 	}
 
 	//Initialize logging
+	if(!log_init()) {
+		printf("Failed to initialize logging!\n");
+		cfg_destroy();
+		lockf(lock_fd, F_ULOCK, 0);
+		close(lock_fd);
+		return -1;
+	}
+
 	//Change to daemon process
+	run_as_daemon();
+
 	//Initialize server
 	//Initialize network
 	//Server main

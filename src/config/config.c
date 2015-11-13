@@ -19,6 +19,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "ini.h"
 #include "config.h"
@@ -30,8 +31,11 @@ static	unsigned short		port;
 static	char*				username;
 static	char*				passwd;
 static	int					max_connect;
+static	size_t				log_file_size;
+static	int					log_file_num;
 static	pini_file_info_t	p_cfg_file = NULL;
 
+static	pthread_mutex_t		mutex;
 
 bool cfg_init()
 {
@@ -137,8 +141,51 @@ bool cfg_init()
 		return false;
 	}
 
+	//Log
+	//Log file size
+	len = ini_get_key_value(p_cfg_file, "log", "log-file-size",
+	                        buf, buf_len);
+
+	if(len != 0) {
+		if(len > buf_len) {
+			free(buf);
+			buf_len = len;
+			buf = malloc(buf_len);
+			ini_get_key_value(p_cfg_file, "log", "log-file-size",
+			                  buf, buf_len);
+		}
+
+		log_file_size = atol(buf);
+
+	} else {
+		ini_close(p_cfg_file);
+		return false;
+	}
+
+	//Log file num
+	len = ini_get_key_value(p_cfg_file, "log", "log-file-num",
+	                        buf, buf_len);
+
+	if(len != 0) {
+		if(len > buf_len) {
+			free(buf);
+			buf_len = len;
+			buf = malloc(buf_len);
+			ini_get_key_value(p_cfg_file, "log", "log-file-num",
+			                  buf, buf_len);
+		}
+
+		log_file_num = atoi(buf);
+
+	} else {
+		ini_close(p_cfg_file);
+		return false;
+	}
 
 	free(buf);
+
+	//Initialize mutex
+	pthread_mutex_init(&mutex, NULL);
 
 	return true;
 }
@@ -150,6 +197,7 @@ void cfg_destroy()
 		free(mcserver_cmd_line);
 		free(username);
 		free(passwd);
+		pthread_mutex_destroy(&mutex);
 	}
 
 	return;
@@ -160,12 +208,131 @@ bool cfg_write()
 	return ini_sync(p_cfg_file);
 }
 
-size_t				cfg_get_mcserver_cmd_line(char* buf, size_t buf_size);
-unsigned short		cfg_get_port();
-void				cfg_set_port();
-size_t				cfg_get_username(char* buf, size_t buf_size);
-void				cfg_set_username(char* username);
-size_t				cfg_get_passwd(char* buf, size_t buf_size);
-void				cfg_set_passwd(char* passwd);
-int					cfg_get_max_connect();
-void				cfg_set_max_connect(int num);
+size_t cfg_get_mcserver_cmd_line(char* buf, size_t buf_size)
+{
+	size_t size;
+
+	pthread_mutex_lock(&mutex);
+	size = strlen(mcserver_cmd_line) + 1;
+
+	if(buf_size < size) {
+		pthread_mutex_unlock(&mutex);
+		return size;
+
+	} else {
+		strcpy(buf, mcserver_cmd_line);
+		pthread_mutex_unlock(&mutex);
+		return size;
+	}
+
+}
+
+unsigned short cfg_get_port()
+{
+	return port;
+}
+
+void cfg_set_port(unsigned short new_port)
+{
+	char buf[64];
+
+	pthread_mutex_lock(&mutex);
+	port = new_port;
+	sprintf(buf, "%u", port);
+	ini_set_key_value(p_cfg_file, "ssh", "port", buf);
+	pthread_mutex_unlock(&mutex);
+	return;
+}
+
+size_t cfg_get_username(char* buf, size_t buf_size)
+{
+	size_t size;
+
+	pthread_mutex_lock(&mutex);
+	size = strlen(username) + 1;
+
+	if(buf_size < size) {
+		pthread_mutex_unlock(&mutex);
+		return size;
+
+	} else {
+		strcpy(buf, username);
+		pthread_mutex_unlock(&mutex);
+		return size;
+	}
+}
+
+void cfg_set_username(char* new_usrname)
+{
+	size_t size;
+
+	pthread_mutex_lock(&mutex);
+	size = strlen(new_usrname) + 1;
+	free(username);
+	username = malloc(size);
+	strcpy(username, new_usrname);
+	ini_set_key_value(p_cfg_file, "ssh",
+	                  "username", username);
+	pthread_mutex_unlock(&mutex);
+	return;
+}
+
+size_t cfg_get_passwd(char* buf, size_t buf_size)
+{
+	size_t size;
+
+	pthread_mutex_lock(&mutex);
+	size = strlen(passwd) + 1;
+
+	if(buf_size < size) {
+		pthread_mutex_unlock(&mutex);
+		return size;
+
+	} else {
+		strcpy(buf, passwd);
+		pthread_mutex_unlock(&mutex);
+		return size;
+	}
+}
+
+void cfg_set_passwd(char* new_passwd)
+{
+	size_t size;
+
+	pthread_mutex_lock(&mutex);
+	size = strlen(new_passwd) + 1;
+	free(passwd);
+	passwd = malloc(size);
+	strcpy(passwd, new_passwd);
+	ini_set_key_value(p_cfg_file, "ssh",
+	                  "password", passwd);
+	pthread_mutex_unlock(&mutex);
+	return;
+}
+
+int cfg_get_max_connect()
+{
+	return max_connect;
+}
+
+void cfg_set_max_connect(int num)
+{
+	char buf[64];
+	max_connect = num;
+
+	pthread_mutex_lock(&mutex);
+	sprintf(buf, "%u", max_connect);
+	ini_set_key_value(p_cfg_file, "ssh", "max_connection", buf);
+	pthread_mutex_unlock(&mutex);
+	return;
+}
+
+size_t cfg_get_log_file_size()
+{
+	return log_file_size;
+}
+
+int cfg_get_log_file_num()
+{
+	return log_file_num;
+}
