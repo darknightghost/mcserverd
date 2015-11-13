@@ -21,11 +21,10 @@
 #include <sys/stat.h>
 #include <stdio.h>
 
-#include "./config/config.h"
+#include "common/common.h"
+#include "config/config.h"
 
 #define	LOCK_FILE	"/tmp/mcserverd.lck"
-
-static	void	run_as_daemon();
 
 int main(int argc, char* argv[])
 {
@@ -68,7 +67,14 @@ int main(int argc, char* argv[])
 	}
 
 	//Change to daemon process
-	run_as_daemon();
+	if(daemon(0, 0) != 0) {
+		printf("Failed to run in background!\n");
+		log_close();
+		cfg_destroy();
+		lockf(lock_fd, F_ULOCK, 0);
+		close(lock_fd);
+		return -1;
+	}
 
 	//Initialize server
 	//Initialize network
@@ -79,9 +85,4 @@ int main(int argc, char* argv[])
 	close(lock_fd);
 
 	return 0;
-}
-
-void run_as_daemon()
-{
-
 }

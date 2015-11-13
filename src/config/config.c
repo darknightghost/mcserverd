@@ -37,6 +37,8 @@ static	pini_file_info_t	p_cfg_file = NULL;
 
 static	pthread_mutex_t		mutex;
 
+static	size_t				get_size(char* buf);
+
 bool cfg_init()
 {
 	size_t len;
@@ -155,7 +157,7 @@ bool cfg_init()
 			                  buf, buf_len);
 		}
 
-		log_file_size = atol(buf);
+		log_file_size = get_size(buf);
 
 	} else {
 		ini_close(p_cfg_file);
@@ -335,4 +337,37 @@ size_t cfg_get_log_file_size()
 int cfg_get_log_file_num()
 {
 	return log_file_num;
+}
+
+size_t get_size(char* buf)
+{
+	char* p;
+	size_t size;
+
+	size = atoi(buf);
+
+	for(p = buf; *p != '\0'; p++) {
+		if(*p > '9' && *p < '0') {
+			if(*p == 'G') {
+				size *= 1024 * 1024 * 1024;
+				break;
+
+			} else if(*p == 'M') {
+				size *= 1024 * 1024;
+				break;
+
+			} else if(*p == 'K') {
+				size *= 1024;
+				break;
+
+			} else if(*p == 'B') {
+				break;
+
+			} else {
+				break;
+			}
+		}
+	}
+
+	return size;
 }
