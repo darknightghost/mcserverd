@@ -19,6 +19,7 @@
 An sample of config file
 
 [minecraft]
+workdir=/
 command=java -Xms1024M -Xmx1024M -jar minecraft_server.jar nogui
 
 [ssh]
@@ -53,6 +54,7 @@ void				cfg_destroy();
 bool				cfg_write();
 
 //Server command line
+size_t				cfg_get_mcserver_dir(char* buf, size_t buf_size);
 size_t				cfg_get_mcserver_cmd_line(char* buf, size_t buf_size);
 
 //SSH port

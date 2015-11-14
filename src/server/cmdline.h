@@ -14,3 +14,16 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifndef	CMDLINE_H_INCLUDE
+#define	CMDLINE_H_INCLUDE
+
+#include "../common/common.h"
+#include <stdlib.h>
+
+bool		cmdline_init();
+void		cmdline_destroy();
+size_t		cmdline_read(char* buf, size_t buf_size);
+void		cmdline_write(char* buf, size_t size);
+
+#endif	//!	CMDLINE_H_INCLUDE

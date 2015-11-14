@@ -23,6 +23,7 @@
 
 #include "common/common.h"
 #include "config/config.h"
+#include "log/log.h"
 
 #define	LOCK_FILE	"/tmp/mcserverd.lck"
 
@@ -83,6 +84,9 @@ int main(int argc, char* argv[])
 	cfg_destroy();
 	lockf(lock_fd, F_ULOCK, 0);
 	close(lock_fd);
+
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
 
 	return 0;
 }

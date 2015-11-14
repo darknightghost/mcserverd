@@ -14,3 +14,18 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifndef	GAME_SERVER_H_INCLUDE
+#define	GAME_SERVER_H_INCLUDE
+
+#include "../common/common.h"
+#include <stdlib.h>
+
+void		game_init();
+void		game_destroy();
+bool		game_start();
+void		game_stop();
+size_t		game_read(char* buf, size_t buf_size);
+void		game_write(char* buf, size_t size);
+
+#endif	//!	GAME_SERVER_H_INCLUDE

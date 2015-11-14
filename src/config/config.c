@@ -26,6 +26,7 @@
 
 #define	CFG_FILE			"/etc/mcserverd.conf"
 
+static	char*				mcserver_dir = NULL;
 static	char*				mcserver_cmd_line = NULL;
 static	unsigned short		port;
 static	char*				username;
@@ -59,6 +60,18 @@ bool cfg_init()
 
 	//Get config files
 	//Minecraft config
+	//Working directory
+	len = ini_get_key_value(p_cfg_file, "minecraft", "workdir", NULL, 0);
+
+	if(len == 0) {
+		ini_close(p_cfg_file);
+		return false;
+	}
+
+	mcserver_dir = malloc(len);
+	ini_get_key_value(p_cfg_file, "minecraft", "workdir",
+	                  mcserver_dir, len);
+
 	//Sever command line
 	len = ini_get_key_value(p_cfg_file, "minecraft", "command", NULL, 0);
 
@@ -210,7 +223,7 @@ bool cfg_write()
 	return ini_sync(p_cfg_file);
 }
 
-size_t cfg_get_mcserver_cmd_line(char* buf, size_t buf_size)
+size_t cfg_get_mcserver_dir(char* buf, size_t buf_size)
 {
 	size_t size;
 
@@ -226,7 +239,24 @@ size_t cfg_get_mcserver_cmd_line(char* buf, size_t buf_size)
 		pthread_mutex_unlock(&mutex);
 		return size;
 	}
+}
 
+size_t cfg_get_mcserver_cmd_line(char* buf, size_t buf_size)
+{
+	size_t size;
+
+	pthread_mutex_lock(&mutex);
+	size = strlen(mcserver_dir) + 1;
+
+	if(buf_size < size) {
+		pthread_mutex_unlock(&mutex);
+		return size;
+
+	} else {
+		strcpy(buf, mcserver_dir);
+		pthread_mutex_unlock(&mutex);
+		return size;
+	}
 }
 
 unsigned short cfg_get_port()

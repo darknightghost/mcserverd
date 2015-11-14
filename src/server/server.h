@@ -14,3 +14,18 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#ifndef	SERVER_H_INCLUDE
+#define	SERVER_H_INCLUDE
+
+#include "../common/common.h"
+#include <stdlib.h>
+
+bool		server_init();
+void		server_destroy();
+bool		server_start();
+void		server_stop();
+size_t		server_read(char* buf, size_t buf_size);
+void		server_write(char* buf, size_t size);
+
+#endif	//!	SERVER_H_INCLUDE

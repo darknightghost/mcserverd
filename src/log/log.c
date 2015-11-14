@@ -139,22 +139,16 @@ void printlog(int log, char* fmt, ...)
 	//Print file
 	va_start(args, fmt);
 
-	if(log == LOG_SERVER) {
-		out_size = vfprintf(*p_fp, fmt, args);
-		time_size = -1;
-
-	} else {
-		secs = time((time_t)0);
-		localtime_r(&secs, &st_tm);
-		time_size = fprintf(*p_fp, "[%d-%d-%d %d:%d:%d] ",
-		                    st_tm.tm_year,
-		                    st_tm.tm_mon,
-		                    st_tm.tm_mday,
-		                    st_tm.tm_hour,
-		                    st_tm.tm_min,
-		                    st_tm.tm_sec);
-		out_size = vfprintf(*p_fp, fmt, args);
-	}
+	secs = time((time_t)0);
+	localtime_r(&secs, &st_tm);
+	time_size = fprintf(*p_fp, "[%d-%d-%d %d:%d:%d] ",
+	                    st_tm.tm_mon,
+	                    st_tm.tm_mday,
+	                    st_tm.tm_year,
+	                    st_tm.tm_hour,
+	                    st_tm.tm_min,
+	                    st_tm.tm_sec);
+	out_size = vfprintf(*p_fp, fmt, args);
 
 	if(out_size > 0) {
 		(*p_size) += out_size;

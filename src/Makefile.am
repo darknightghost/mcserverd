@@ -1,5 +1,6 @@
 AUTOMAKE_OPTIONS = foreign subdir-objects
 bin_PROGRAMS = mcserverd
+CFLAGS = -O0 -g -Wall -Werror -Wunused-parameter
 mcserverd_SOURCES = main.c \
 						common/common.h \
 						common/list.h \

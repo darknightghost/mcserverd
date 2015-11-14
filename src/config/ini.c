@@ -109,7 +109,6 @@ void ini_set_key_value(pini_file_info_t p_file,
 {
 	pini_section_t p_section;
 	pini_key_t p_key;
-	size_t len;
 	plist_node_t p_node;
 
 
