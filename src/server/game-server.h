@@ -25,6 +25,7 @@ bool		game_init();
 void		game_destroy();
 bool		game_start();
 void		game_stop();
+bool		game_is_running();
 size_t		game_read(char* buf, size_t buf_size);
 size_t		game_write(char* buf, size_t size);
 

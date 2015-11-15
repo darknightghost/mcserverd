@@ -23,6 +23,8 @@
 
 bool		cmdline_init();
 void		cmdline_destroy();
+bool		cmdline_start();
+void		cmdline_stop();
 size_t		cmdline_read(char* buf, size_t buf_size);
 size_t		cmdline_write(char* buf, size_t size);
 

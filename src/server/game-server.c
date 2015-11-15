@@ -120,6 +120,11 @@ void game_stop()
 	return;
 }
 
+bool game_is_running()
+{
+	return running_flag;
+}
+
 size_t game_read(char* buf, size_t buf_size)
 {
 	ssize_t ret;
