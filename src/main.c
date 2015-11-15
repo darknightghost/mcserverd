@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
 	}
 
 	//Change to daemon process
-	if(daemon(0, 0) != 0) {
+	if(daemon(0, 1) != 0) {
 		printf("Failed to run in background!\n");
 		log_close();
 		cfg_destroy();

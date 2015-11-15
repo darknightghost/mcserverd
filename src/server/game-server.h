@@ -21,11 +21,11 @@
 #include "../common/common.h"
 #include <stdlib.h>
 
-void		game_init();
+bool		game_init();
 void		game_destroy();
 bool		game_start();
 void		game_stop();
 size_t		game_read(char* buf, size_t buf_size);
-void		game_write(char* buf, size_t size);
+size_t		game_write(char* buf, size_t size);
 
 #endif	//!	GAME_SERVER_H_INCLUDE

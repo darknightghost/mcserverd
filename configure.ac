@@ -13,6 +13,8 @@ AC_PROG_CC
 # Checks for libraries.
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([ssh], [ssh_new])
+AC_CHECK_LIB([readline], [readline])
+AC_CHECK_LIB([curses], [init_color])
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h \

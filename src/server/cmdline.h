@@ -24,6 +24,6 @@
 bool		cmdline_init();
 void		cmdline_destroy();
 size_t		cmdline_read(char* buf, size_t buf_size);
-void		cmdline_write(char* buf, size_t size);
+size_t		cmdline_write(char* buf, size_t size);
 
 #endif	//!	CMDLINE_H_INCLUDE

@@ -25,6 +25,9 @@
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/fsuid.h>
+#include <sys/stat.h>
+#include <grp.h>
 
 #include "../config/config.h"
 #include "../log/log.h"
@@ -44,18 +47,35 @@ static	pthread_t			wait_thread_id;
 
 static	int					run_server();
 static	void				exec_command(char* cmd);
+static	void				set_privilege(char* path);
 static	void*				wait_thread(void* args);
 
-void game_init()
+bool game_init()
 {
+	//Create pipes
+	if(pipe(pipe_input) == -1) {
+		return false;
+	}
+
+	if(pipe(pipe_output) == -1) {
+		close(pipe_input[0]);
+		close(pipe_input[1]);
+		return false;
+	}
+
 	pthread_mutex_init(&fd_mutex, NULL);
-	return;
+
+	return true;
 }
 
 void game_destroy()
 {
 	game_stop();
 	pthread_mutex_destroy(&fd_mutex);
+	close(pipe_input[0]);
+	close(pipe_input[1]);
+	close(pipe_output[0]);
+	close(pipe_output[1]);
 	return;
 }
 
@@ -122,17 +142,27 @@ size_t game_read(char* buf, size_t buf_size)
 	return 0;
 }
 
-void game_write(char* buf, size_t size)
+size_t game_write(char* buf, size_t size)
 {
+	ssize_t ret;
 	pthread_mutex_lock(&fd_mutex);
 
 	if(running_flag) {
-		write(pipe_input[FD_WRITE], buf, size);
+		ret = write(pipe_input[FD_WRITE], buf, size);
+		pthread_mutex_unlock(&fd_mutex);
+
+		if(ret > 0) {
+			return ret;
+
+		} else {
+			return 0;
+		}
+
 	}
 
 	pthread_mutex_unlock(&fd_mutex);
 
-	return;
+	return 0;
 }
 
 
@@ -140,51 +170,32 @@ int run_server()
 {
 	pid_t pid;
 
-	//Create pipes
-	if(pipe(pipe_input) < 0) {
-		return -1;
-	}
-
-	if(pipe(pipe_output) < 0) {
-		close(pipe_input[0]);
-		close(pipe_input[1]);
-		return -1;
-	}
 
 	//Fork
 	pid = fork();
 
 	if(pid == -1) {
-		close(pipe_input[0]);
-		close(pipe_input[1]);
-		close(pipe_output[0]);
-		close(pipe_output[1]);
 		return -1;
 
 	} else if(pid != 0) {
 		//Parent process
-		close(pipe_input[FD_READ]);
-		close(pipe_output[FD_WRITE]);
 		return pid;
 	}
 
 	//Child process
-	close(pipe_input[FD_WRITE]);
-	close(pipe_output[FD_READ]);
-
 	//Replaces stdin stdou&stderr
 	//stdin
-	if(dup2(pipe_input[FD_READ], 0) == -1) {
+	if(dup2(pipe_input[FD_READ], STDIN_FILENO) == -1) {
 		exit(-1);
 	}
 
 	//stdout
-	if(dup2(pipe_output[FD_WRITE], 1) == -1) {
+	if(dup2(pipe_output[FD_WRITE], STDOUT_FILENO) == -1) {
 		exit(-1);
 	}
 
 	//stderr
-	if(dup2(pipe_output[FD_WRITE], 2) == -1) {
+	if(dup2(pipe_output[FD_WRITE], STDERR_FILENO) == -1) {
 		exit(-1);
 	}
 
@@ -244,7 +255,27 @@ void exec_command(char* cmd)
 	}
 
 	*p_args = NULL;
+
+	//Set privilege
+	set_privilege(buf);
+
 	execvp(buf, args);
+	return;
+}
+
+void set_privilege(char* path)
+{
+	struct stat result;
+
+	if(stat(path, &result) != 0) {
+		return;
+	}
+
+	//Set uid,gid,groups
+	setgid(result.st_gid);
+	setgroups(1, &(result.st_gid));
+	setuid(result.st_uid);
+
 	return;
 }
 
@@ -258,8 +289,6 @@ void* wait_thread(void* args)
 		server_pid = run_server();
 
 		if(server_pid == -1) {
-			close(pipe_input[FD_WRITE]);
-			close(pipe_output[FD_READ]);
 			pthread_mutex_unlock(&fd_mutex);
 			printlog(LOG_SERVER, "Failed to run server!\n");
 			continue;

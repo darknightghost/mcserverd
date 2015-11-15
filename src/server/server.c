@@ -22,7 +22,9 @@
 bool server_init()
 {
 	//Start mincraft server
-	game_init();
+	if(!game_init()) {
+		return false;
+	}
 
 	//Initialize shell
 	if(!cmdline_init()) {
@@ -56,8 +58,7 @@ size_t server_read(char* buf, size_t buf_size)
 	return cmdline_read(buf, buf_size);
 }
 
-void server_write(char* buf, size_t size)
+size_t server_write(char* buf, size_t size)
 {
-	cmdline_write(buf, size);
-	return;
+	return cmdline_write(buf, size);
 }
