@@ -328,6 +328,8 @@ void exec_server_cmd(int argc, char* argv[])
 
 	}
 
+	UNREFERRED_PARAMETER(argc);
+
 	return;
 }
 

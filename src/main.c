@@ -24,6 +24,8 @@
 #include "common/common.h"
 #include "config/config.h"
 #include "log/log.h"
+#include "server/server.h"
+#include "network/network.h"
 
 #define	LOCK_FILE	"/tmp/mcserverd.lck"
 
@@ -78,6 +80,25 @@ int main(int argc, char* argv[])
 	}
 
 	//Initialize server
+	if(!server_init()) {
+		printlog(LOG_SERVER, "Failed to initialize server!\n");
+		log_close();
+		cfg_destroy();
+		lockf(lock_fd, F_ULOCK, 0);
+		close(lock_fd);
+		return -1;
+	}
+
+	if(!server_start()) {
+		printlog(LOG_SERVER, "Failed to start server!\n");
+		server_destroy();
+		log_close();
+		cfg_destroy();
+		lockf(lock_fd, F_ULOCK, 0);
+		close(lock_fd);
+		return -1;
+	}
+
 	//Initialize network
 	//Server main
 

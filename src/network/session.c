@@ -14,3 +14,34 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
+#include <stdlib.h>
+
+#include "session.h"
+
+psession_t session_new()
+{
+	psession_t p_session;
+
+	p_session = malloc(sizeof(session_t));
+	p_session->session = ssh_new();
+	p_session->event = ssh_event_new();
+	p_session->channel = NULL;
+	p_session->status = SESSION_WAITING;
+	p_session->tried_time = 0;
+	p_session->authed = false;
+
+	return p_session;
+}
+
+void session_free(psession_t p_session)
+{
+	if(p_session->channel != NULL) {
+		ssh_channel_free(p_session->channel);
+		ssh_event_free(p_session->event);
+		ssh_free(p_session->session);
+		free(p_session);
+	}
+
+	return;
+}

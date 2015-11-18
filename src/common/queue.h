@@ -22,21 +22,27 @@
 
 typedef	list_t	queue_t, *pqueue_t;
 
-#define	queue_front(queue)			((queue) == NULL\
-                                     ?NULL\
-                                     :(queue)->p_item)
+#define	queue_init(queue)						list_init(queue)
 
-#define	queue_back(queue)			((queue) == NULL\
-                                     ?NULL\
-                                     :(queue)->p_prev->p_item)
+#define	queue_front(queue)						((queue) == NULL\
+        ?NULL\
+        :(queue)->p_item)
 
-#define	queue_push(queue,p_item)	list_insert_after(&(queue),\
+#define	queue_back(queue)						((queue) == NULL\
+        ?NULL\
+        :(queue)->p_prev->p_item)
+
+#define	queue_push(queue,p_item)				list_insert_after(&(queue),\
         NULL,\
         (p_item))
 
-#define	queue_pop(queue)			((queue) == NULL\
-                                     ?NULL\
-                                     :((queue)->p_item,\
-                                       list_remove(&(queue), (queue))))
+#define	queue_pop(queue)						((queue) == NULL\
+        ?NULL\
+        :((queue)->p_item,\
+          list_remove(&(queue), (queue))))
+
+#define	queue_destroy(queue,callback,p_args)	list_destroy((queue),\
+        (callback),\
+        (p_args))
 
 #endif	//!	QUEUE_H_INCLUDE
