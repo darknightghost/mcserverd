@@ -18,14 +18,19 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
+#include <termios.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "../config/config.h"
 #include "cmdline.h"
 #include "game-server.h"
+#include "../network/network.h"
 
 #define	FD_READ		0
 #define	FD_WRITE	1
+
+#define	ECHOFLAGS		(ECHO | ECHOE | ECHOK | ECHONL)
 
 static	int					pipe_stdin[2];
 static	int					pipe_stdout[2];
@@ -40,6 +45,17 @@ static	char**				analyse_command(char* cmd, int* p_argc);
 static	void				jump_space(char**p);
 static	void				exec_server_cmd(int argc, char* argv[]);
 static	void				exec_mc_cmd(char* cmd);
+
+//Commands
+static	void				cmd_server_start(int argc, char* argv[]);
+static	void				cmd_server_username(int argc, char* argv[]);
+static	void				cmd_server_passwd(int argc, char* argv[]);
+static	void				cmd_server_server(int argc, char* argv[]);
+static	void				cmd_server_exit(int argc, char* argv[]);
+static	void				cmd_server_status(int argc, char* argv[]);
+
+static	void				cmd_mc_stop();
+static	void				cmd_mc_exit();
 
 bool cmdline_init()
 {
@@ -316,16 +332,22 @@ void jump_space(char**p)
 void exec_server_cmd(int argc, char* argv[])
 {
 	if(strcmp(argv[0], "start") == 0) {
+		cmd_server_start(argc, argv);
+
 	} else if(strcmp(argv[0], "username") == 0) {
+		cmd_server_username(argc, argv);
 
 	} else if(strcmp(argv[0], "passwd") == 0) {
+		cmd_server_passwd(argc, argv);
 
 	} else if(strcmp(argv[0], "server") == 0) {
+		cmd_server_server(argc, argv);
 
 	} else if(strcmp(argv[0], "exit") == 0) {
+		cmd_server_exit(argc, argv);
 
 	} else if(strcmp(argv[0], "status") == 0) {
-
+		cmd_server_status(argc, argv);
 	}
 
 	UNREFERRED_PARAMETER(argc);
@@ -335,11 +357,143 @@ void exec_server_cmd(int argc, char* argv[])
 
 void exec_mc_cmd(char* cmd)
 {
+	size_t len;
+	size_t written;
+
 	if(strcmp("stop", cmd) == 0) {
+		cmd_mc_stop();
 
 	} else if(strcmp("exit", cmd) == 0) {
+		cmd_mc_exit();
 
 	} else {
+		len = strlen(cmd);
 
+		for(written = 0; written < len;) {
+			written += game_write(cmd + written, len - written);
+		}
 	}
+}
+
+void cmd_server_start(int argc, char* argv[])
+{
+	if(game_start()) {
+		printf("Service started.\n");
+
+	} else {
+		printf("Failed to start service.\n");
+	}
+
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
+	return;
+}
+
+void cmd_server_username(int argc, char* argv[])
+{
+	char usrname[MAX_USERNAME_LEN + 5];
+
+	printf("New username:");
+	fgets(usrname, MAX_USERNAME_LEN + 4, stdin);
+	*(usrname + strlen(usrname) - 1) = '\0';
+
+	if(strlen(usrname) > MAX_USERNAME_LEN) {
+		printf("The length of username must below %d!\n", MAX_USERNAME_LEN);
+
+	} else {
+		cfg_set_username(usrname);
+	}
+
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
+	return;
+}
+
+void cmd_server_passwd(int argc, char* argv[])
+{
+	struct termios term;
+	char passwd[MAX_PASSWD_LEN + 5];
+	char passwd_again[MAX_PASSWD_LEN + 5];
+
+	//Disable echo
+	if(tcgetattr(STDIN_FILENO, &term) == -1) {
+		printf("Failed to get terminal attribute!\n");
+		return;
+	}
+
+	term.c_lflag &= ~ECHOFLAGS;
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
+
+	//Get new password
+	printf("New password:");
+	fgets(passwd, MAX_PASSWD_LEN + 4, stdin);
+	*(passwd + strlen(passwd) - 1) = '\0';
+
+	if(strlen(passwd) > MAX_PASSWD_LEN) {
+		printf("The length of password must below %d!\n", MAX_PASSWD_LEN);
+
+	} else {
+		//Again
+		printf("\nRetype new password:");
+		fgets(passwd_again, MAX_PASSWD_LEN + 4, stdin);
+		*(passwd_again + strlen(passwd_again) - 1) = '\0';
+
+		if(strcmp(passwd, passwd_again) == 0) {
+			cfg_set_passwd(passwd);
+			printf("\n");
+
+		} else {
+			printf("Sorry, passwords do not match.\n");
+		}
+	}
+
+	//Enable echo
+	term.c_lflag |= ECHOFLAGS;
+	tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
+
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
+	return;
+}
+
+void cmd_server_server(int argc, char* argv[])
+{
+	mc_mode = true;
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
+	return;
+}
+
+void cmd_server_exit(int argc, char* argv[])
+{
+	network_logoff();
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
+	return;
+}
+
+void cmd_server_status(int argc, char* argv[])
+{
+	if(game_is_running()) {
+		printf("Service started.\n");
+
+	} else {
+		printf("Service stopped.\n");
+	}
+
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
+	return;
+}
+
+void cmd_mc_stop()
+{
+	game_stop();
+	return;
+}
+
+void cmd_mc_exit()
+{
+	mc_mode = false;
+	return;
 }

@@ -25,6 +25,7 @@ bool		server_init();
 void		server_destroy();
 bool		server_start();
 void		server_stop();
+void		server_refresh();
 size_t		server_read(char* buf, size_t buf_size);
 size_t		server_write(char* buf, size_t size);
 

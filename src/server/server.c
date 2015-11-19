@@ -53,6 +53,13 @@ void server_stop()
 	return;
 }
 
+void server_refresh()
+{
+	cmdline_stop();
+	cmdline_start();
+	return;
+}
+
 size_t server_read(char* buf, size_t buf_size)
 {
 	return cmdline_read(buf, buf_size);

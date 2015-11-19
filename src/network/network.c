@@ -203,6 +203,18 @@ void network_quit()
 	return;
 }
 
+void network_logoff()
+{
+	psession_t p_session;
+
+	pthread_mutex_lock(&mutex);
+	p_session = (psession_t)queue_front(session_queue);
+	ssh_channel_free(p_session->channel);
+	p_session->channel = NULL;
+	pthread_mutex_unlock(&mutex);
+	return;
+}
+
 void session_destroy_callback(void* p_item, void* args)
 {
 	psession_t p_session = (psession_t)p_item;
@@ -453,6 +465,7 @@ void* gc_thread(void* args)
 				printlog(LOG_CONN, "Host %s actived.\n",
 				         inet_ntoa(*(struct in_addr*)(&addr)));
 				pthread_mutex_unlock(&socket_mutex);
+				server_refresh();
 			}
 		}
 	}

@@ -28,5 +28,6 @@ void			network_init();
 void			network_destroy();
 int				network_main();
 void			network_quit();
+void			network_logoff();
 
 #endif	//!	NETWORK_H_INCLUDE
