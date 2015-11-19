@@ -419,7 +419,7 @@ $config_files
 Configuration commands:
 $config_commands
 
-Report bugs to <darknightghost@gmail.com>."
+Report bugs to <darknightghost.cn@gmail.com>."
 
 ac_cs_config=""
 ac_cs_version="\
@@ -657,10 +657,10 @@ S["ECHO_T"]=""
 S["ECHO_N"]="-n"
 S["ECHO_C"]=""
 S["DEFS"]="-DPACKAGE_NAME=\\\"mcserverd\\\" -DPACKAGE_TARNAME=\\\"mcserverd\\\" -DPACKAGE_VERSION=\\\"0.0.1\\\" -DPACKAGE_STRING=\\\"mcserverd\\ 0.0.1\\\" -DPACKAGE_BUGREPORT=\\"\
-"\"darknightghost@gmail.com\\\" -DPACKAGE_URL=\\\"\\\" -DHAVE_LIBPTHREAD=1 -DHAVE_LIBSSH=1 -DHAVE_LIBREADLINE=1 -DHAVE_LIBCURSES=1 -DSTDC_HEADERS=1 -DHAVE_S"\
-"YS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHA"\
-"VE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_STDIO_H=1 -DHAVE_LIBSSH_LIBSSH_H=1 -DHAVE_LIBSSH_SERVER_"\
-"H=1 -DHAVE_LIBSSH_CALLBACKS_H=1 -DHAVE__BOOL=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1"
+"\"darknightghost.cn@gmail.com\\\" -DPACKAGE_URL=\\\"\\\" -DHAVE_LIBPTHREAD=1 -DHAVE_LIBSSH=1 -DHAVE_LIBREADLINE=1 -DHAVE_LIBCURSES=1 -DSTDC_HEADERS=1 -DHAV"\
+"E_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -"\
+"DHAVE_UNISTD_H=1 -DHAVE_FCNTL_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_STDIO_H=1 -DHAVE_LIBSSH_LIBSSH_H=1 -DHAVE_LIBSSH_SERV"\
+"ER_H=1 -DHAVE_LIBSSH_CALLBACKS_H=1 -DHAVE__BOOL=1 -DHAVE_STDLIB_H=1 -DHAVE_MALLOC=1"
 S["mandir"]="${datarootdir}/man"
 S["localedir"]="${datarootdir}/locale"
 S["libdir"]="${exec_prefix}/lib"
@@ -684,7 +684,7 @@ S["program_transform_name"]="s,x,x,"
 S["prefix"]="/usr/local"
 S["exec_prefix"]="${prefix}"
 S["PACKAGE_URL"]=""
-S["PACKAGE_BUGREPORT"]="darknightghost@gmail.com"
+S["PACKAGE_BUGREPORT"]="darknightghost.cn@gmail.com"
 S["PACKAGE_STRING"]="mcserverd 0.0.1"
 S["PACKAGE_VERSION"]="0.0.1"
 S["PACKAGE_TARNAME"]="mcserverd"

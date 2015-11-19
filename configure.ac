@@ -2,9 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([mcserverd], [0.0.1], [darknightghost@gmail.com])
+AC_INIT([mcserverd], [0.0.1], [darknightghost.cn@gmail.com])
 AC_CONFIG_SRCDIR([src/main.c])
-AM_INIT_AUTOMAKE(mcserverd,0.0.1,darknightghost@gmail.com)
+AM_INIT_AUTOMAKE(mcserverd,0.0.1,darknightghost.cn@gmail.com)
 AC_PROG_RANLIB
 
 # Checks for programs.
