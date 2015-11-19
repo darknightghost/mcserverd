@@ -93,8 +93,8 @@ am__dirstamp = $(am__leading_dot)dirstamp
 am_mcserverd_OBJECTS = main.$(OBJEXT) common/list.$(OBJEXT) \
 	config/config.$(OBJEXT) config/ini.$(OBJEXT) log/log.$(OBJEXT) \
 	network/network.$(OBJEXT) network/session.$(OBJEXT) \
-	network/connections.$(OBJEXT) server/cmdline.$(OBJEXT) \
-	server/game-server.$(OBJEXT) server/server.$(OBJEXT)
+	server/cmdline.$(OBJEXT) server/game-server.$(OBJEXT) \
+	server/server.$(OBJEXT)
 mcserverd_OBJECTS = $(am_mcserverd_OBJECTS)
 mcserverd_LDADD = $(LDADD)
 AM_V_P = $(am__v_P_@AM_V@)
@@ -257,8 +257,6 @@ mcserverd_SOURCES = main.c \
 						network/network.c \
 						network/session.h \
 						network/session.c \
-						network/connections.h \
-						network/connections.c \
 						server/cmdline.h \
 						server/cmdline.c \
 						server/game-server.h \
@@ -377,8 +375,6 @@ network/network.$(OBJEXT): network/$(am__dirstamp) \
 	network/$(DEPDIR)/$(am__dirstamp)
 network/session.$(OBJEXT): network/$(am__dirstamp) \
 	network/$(DEPDIR)/$(am__dirstamp)
-network/connections.$(OBJEXT): network/$(am__dirstamp) \
-	network/$(DEPDIR)/$(am__dirstamp)
 server/$(am__dirstamp):
 	@$(MKDIR_P) server
 	@: > server/$(am__dirstamp)
@@ -412,7 +408,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@config/$(DEPDIR)/ini.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@log/$(DEPDIR)/log.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@network/$(DEPDIR)/connections.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@network/$(DEPDIR)/network.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@network/$(DEPDIR)/session.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@server/$(DEPDIR)/cmdline.Po@am__quote@

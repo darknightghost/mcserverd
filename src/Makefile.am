@@ -17,8 +17,6 @@ mcserverd_SOURCES = main.c \
 						network/network.c \
 						network/session.h \
 						network/session.c \
-						network/connections.h \
-						network/connections.c \
 						server/cmdline.h \
 						server/cmdline.c \
 						server/game-server.h \

@@ -35,7 +35,6 @@ typedef struct _session_t {
 	int										tried_time;
 	bool									authed;
 	pthread_t								thread;
-	pthread_t								send_thread;
 	struct ssh_server_callbacks_struct		server_callbacks;
 	struct ssh_channel_callbacks_struct		channel_callbacks;
 } session_t, *psession_t;

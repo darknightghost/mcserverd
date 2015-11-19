@@ -41,7 +41,7 @@ typedef	list_t	queue_t, *pqueue_t;
         :((queue)->p_item,\
           list_remove(&(queue), (queue))))
 
-#define	queue_destroy(queue,callback,p_args)	list_destroy((queue),\
+#define	queue_destroy(queue,callback,p_args)	list_destroy(&(queue),\
         (callback),\
         (p_args))
 

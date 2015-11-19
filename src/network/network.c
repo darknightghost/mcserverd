@@ -19,28 +19,32 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <pthread.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "../common/common.h"
 #include "../log/log.h"
 #include "../config/config.h"
+#include "../server/server.h"
 #include "network.h"
 #include "ssh.h"
 #include "session.h"
-#include "connections.h"
 
 #define	MAX_TRY_TIME	5
 #define	SYS_RSA_KEY		"/etc/ssh/ssh_host_rsa_key"
+#define	WAIT_TEXT		"Other administrators has logged in,please wait until they logged off.\n"
 
 static	queue_t			session_queue;
 static	bool			run_flag;
 static	pthread_mutex_t	mutex;
 static	pthread_mutex_t	socket_mutex;
-static	pthread_mutex_t	cond_mutex;
 static	pthread_t		gc_thread_id;
+static	pthread_t		send_thread_id;
 static	pthread_cond_t	cond;
 static	pthread_t		main_thread;
 
@@ -60,6 +64,7 @@ static	int				conn_receive(ssh_session session, ssh_channel channel,
 static	void*			session_thread(void* args);
 static	void*			send_thread(void* args);
 static	void*			gc_thread(void* args);
+static	void			sigroutine(int dunno);
 
 void network_init()
 {
@@ -82,11 +87,10 @@ void network_destroy()
 int network_main()
 {
 	psession_t p_session;
-	sh_bind bind;
-	int num;
+	ssh_bind bind;
 	int port;
-	void* ret;
 	struct sigaction action;
+	int status;
 
 	main_thread = pthread_self();
 
@@ -123,6 +127,16 @@ int network_main()
 	if(pthread_create(&gc_thread_id,
 	                  NULL, gc_thread, NULL) != 0) {
 		printlog(LOG_CONN, "Failed to create gc thread!\n");
+		ssh_bind_free(bind);
+		return -1;
+	}
+
+	//Create send thread
+	if(pthread_create(&send_thread_id,
+	                  NULL, send_thread, NULL) != 0) {
+		printlog(LOG_CONN, "Failed to create send thread!\n");
+		pthread_cancel(gc_thread_id);
+		pthread_join(gc_thread_id, NULL);
 		ssh_bind_free(bind);
 		return -1;
 	}
@@ -164,13 +178,14 @@ int network_main()
 		}
 
 		pthread_mutex_lock(&mutex);
-		queue_push(p_session);
+		queue_push(session_queue, p_session);
 		pthread_cond_signal(&cond);
 		pthread_mutex_unlock(&mutex);
 	}
 
 	//Join gc thread
-	pthread_join(gc_thread_id, &ret);
+	pthread_join(gc_thread_id, NULL);
+	pthread_join(send_thread_id, NULL);
 
 	//Destroy queue
 	queue_destroy(session_queue, session_destroy_callback, NULL);
@@ -183,14 +198,20 @@ void network_quit()
 {
 	run_flag = false;
 	pthread_kill(SIGCONT, main_thread);
+	pthread_cancel(gc_thread_id);
+	pthread_cancel(send_thread_id);
 	return;
 }
 
 void session_destroy_callback(void* p_item, void* args)
 {
-	void* ret;
+	psession_t p_session = (psession_t)p_item;
 
-	pthread_join(((psession_t)p_item)->thread, &ret);
+	if(p_session->status != SESSION_EXIT) {
+		pthread_cancel(p_session->thread);
+	}
+
+	pthread_join(p_session->thread, NULL);
 	session_free((psession_t)p_item);
 	UNREFERRED_PARAMETER(args);
 	return;
@@ -226,7 +247,7 @@ ssh_channel channel_open(ssh_session session, void *userdata)
 
 	p_session = (psession_t)userdata;
 	p_session->channel = ssh_channel_new(session);
-	return channel;
+	return p_session->channel;
 }
 
 void* session_thread(void* args)
@@ -234,30 +255,29 @@ void* session_thread(void* args)
 	psession_t p_session;
 	struct sockaddr addr;
 	int socket_fd;
+	socklen_t len;
+	int status;
 
 	p_session = (psession_t)args;
 
-	p_session->server_callbacks = {
-		.userdata = p_session,
-		.auth_password_function = conn_auth,
-		.channel_open_request_session_function = channel_open
-	};
+	p_session->server_callbacks.userdata = p_session;
+	p_session->server_callbacks.auth_password_function = conn_auth;
+	p_session->server_callbacks.channel_open_request_session_function = channel_open;
 
-	p_session->channel_callbacks = {
-		.channel_pty_request_function = pty_request,
-		.channel_pty_window_change_function = NULL,
-		.channel_shell_request_function = shell_request,
-		.channel_exec_request_function = NULL,
-		.channel_data_function = conn_receive,
-		.channel_subsystem_request_function = NULL
-	};
+	p_session->channel_callbacks.channel_pty_request_function = pty_request;
+	p_session->channel_callbacks.channel_pty_window_change_function = NULL;
+	p_session->channel_callbacks.channel_shell_request_function = shell_request;
+	p_session->channel_callbacks.channel_exec_request_function = NULL;
+	p_session->channel_callbacks.channel_data_function = conn_receive;
+	p_session->channel_callbacks.channel_subsystem_request_function = NULL;
 
 	//Print log
 	socket_fd = ssh_get_fd(p_session->session);
-	get_peername(socket_fd, &addr, sizeof(addr));
+	len = sizeof(addr);
+	getpeername(socket_fd, &addr, &len);
 	pthread_mutex_lock(&socket_mutex);
 	printlog(LOG_CONN, "Host %s has been accepted.\n",
-	         inet_ntoa((struct in_addr)addr));
+	         inet_ntoa(*(struct in_addr*)(&addr)));
 	pthread_mutex_unlock(&socket_mutex);
 
 	//Server callbacks
@@ -294,7 +314,7 @@ void* session_thread(void* args)
 		if(ssh_event_dopoll(p_session->event, -1) == SSH_ERROR) {
 			pthread_mutex_lock(&socket_mutex);
 			printlog(LOG_CONN, "Connection to %s has been lost.\n",
-			         inet_ntoa((struct in_addr)addr));
+			         inet_ntoa(*(struct in_addr*)(&addr)));
 			pthread_mutex_unlock(&socket_mutex);
 			pthread_mutex_lock(&mutex);
 			p_session->status = SESSION_EXIT;
@@ -306,7 +326,7 @@ void* session_thread(void* args)
 		if(!p_session->tried_time > MAX_TRY_TIME) {
 			pthread_mutex_lock(&socket_mutex);
 			printlog(LOG_CONN, "Host %s has tried too much times.\n",
-			         inet_ntoa((struct in_addr)addr));
+			         inet_ntoa(*(struct in_addr*)(&addr)));
 			pthread_mutex_unlock(&socket_mutex);
 			pthread_mutex_lock(&mutex);
 			p_session->status = SESSION_EXIT;
@@ -316,7 +336,8 @@ void* session_thread(void* args)
 		}
 	}
 
-	if(ssh_set_channel_callbacks(channel, &channel_cb) != SSH_OK) {
+	if(ssh_set_channel_callbacks(p_session->channel,
+	                             &(p_session->channel_callbacks)) != SSH_OK) {
 		pthread_mutex_lock(&mutex);
 		p_session->status = SESSION_EXIT;
 		printlog(LOG_CONN, "Failed to set channel callback.\n");
@@ -325,17 +346,15 @@ void* session_thread(void* args)
 		return NULL;
 	}
 
-	//Create send thread
-
-	while(ssh_channel_is_open(channel)) {
-		if(ssh_event_dopoll(event, -1) == SSH_ERROR) {
+	while(ssh_channel_is_open(p_session->channel)) {
+		if(ssh_event_dopoll(p_session->event, -1) == SSH_ERROR) {
 			break;
 		}
 	}
 
 	pthread_mutex_lock(&socket_mutex);
 	printlog(LOG_CONN, "Host %s has logged off.\n",
-	         inet_ntoa((struct in_addr)addr));
+	         inet_ntoa(*(struct in_addr*)(&addr)));
 	pthread_mutex_unlock(&socket_mutex);
 	pthread_mutex_lock(&mutex);
 	p_session->status = SESSION_EXIT;
@@ -345,14 +364,57 @@ void* session_thread(void* args)
 	return NULL;
 }
 
+void* send_thread(void* args)
+{
+	char buf[1024];
+	size_t size;
+	struct timespec sleep_time;
+	psession_t p_session;
+
+	sleep_time.tv_sec = 0;
+	sleep_time.tv_nsec = 10;
+
+	while(run_flag) {
+		//Read console
+		size = server_read(buf, 1024);
+
+		if(size > 0) {
+			pthread_mutex_lock(&mutex);
+
+			while(queue_front(session_queue) == NULL
+			      || ((psession_t)queue_front(session_queue))->status
+			      == SESSION_EXIT
+			      || !((psession_t)queue_front(session_queue))->authed) {
+				pthread_mutex_unlock(&mutex);
+
+				if(!run_flag) {
+					break;
+				}
+
+				nanosleep(&sleep_time, NULL);
+
+				pthread_mutex_lock(&mutex);
+			}
+
+			p_session = (psession_t)queue_front(session_queue);
+			ssh_channel_write(p_session->channel, buf, size);
+			pthread_mutex_unlock(&mutex);
+		}
+
+	}
+
+	UNREFERRED_PARAMETER(args);
+	return NULL;
+}
+
 void* gc_thread(void* args)
 {
 	plist_node_t p_node;
 	plist_node_t p_next_node;
 	psession_t p_session;
 	pthread_mutex_lock(&mutex);
-	void* ret;
 	struct sockaddr addr;
+	socklen_t len;
 	int socket_fd;
 
 	while(run_flag) {
@@ -370,7 +432,7 @@ void* gc_thread(void* args)
 					//Release the session
 					p_next_node = p_node->p_next;
 					list_remove(&session_queue, p_node);
-					pthread_join(p_session->thread, &ret);
+					pthread_join(p_session->thread, NULL);
 					session_free(p_session);
 					p_node = p_next_node;
 					continue;
@@ -385,10 +447,11 @@ void* gc_thread(void* args)
 			if(p_session->status == SESSION_WAITING) {
 				p_session->status = SESSION_ACTIVE;
 				socket_fd = ssh_get_fd(p_session->session);
-				get_peername(socket_fd, &addr, sizeof(addr));
+				len = sizeof(addr);
+				getpeername(socket_fd, &addr, &len);
 				pthread_mutex_lock(&socket_mutex);
 				printlog(LOG_CONN, "Host %s actived.\n",
-				         inet_ntoa((struct in_addr)addr));
+				         inet_ntoa(*(struct in_addr*)(&addr)));
 				pthread_mutex_unlock(&socket_mutex);
 			}
 		}
@@ -421,6 +484,8 @@ int conn_auth(ssh_session session, const char *user,
 		return SSH_AUTH_DENIED;
 	}
 
+	p_session->authed = true;
+
 	UNREFERRED_PARAMETER(session);
 	return SSH_AUTH_SUCCESS;
 }
@@ -435,6 +500,9 @@ int conn_receive(ssh_session session, ssh_channel channel,
 
 	if(p_session->status == SESSION_ACTIVE) {
 		server_write(data, len);
+
+	} else {
+		ssh_channel_write(channel, WAIT_TEXT, sizeof(WAIT_TEXT) - 1);
 	}
 
 	UNREFERRED_PARAMETER(session);
