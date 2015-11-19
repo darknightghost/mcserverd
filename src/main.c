@@ -100,8 +100,16 @@ int main(int argc, char* argv[])
 	}
 
 	//Initialize network
-	//Server main
+	network_init();
 
+	//Server main
+	network_main();
+
+	network_destroy();
+	server_stop();
+	printlog(LOG_SERVER, "Server exited.\n");
+	server_destroy();
+	log_close();
 	cfg_destroy();
 	lockf(lock_fd, F_ULOCK, 0);
 	close(lock_fd);
