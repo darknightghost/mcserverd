@@ -129,12 +129,19 @@ size_t game_read(char* buf, size_t buf_size)
 {
 	ssize_t ret;
 	pthread_mutex_lock(&fd_mutex);
+	char* log_buf;
 
 	if(running_flag) {
 		ret = read(pipe_output[FD_READ], buf, buf_size);
 		pthread_mutex_unlock(&fd_mutex);
 
 		if(ret > 0) {
+			//Write log
+			log_buf = malloc(ret + 1);
+			memcpy(log_buf, buf, ret);
+			*(log_buf + ret) = '\0';
+			printlog(LOG_SERVER, "%s", log_buf);
+			free(log_buf);
 			return ret;
 
 		} else {
@@ -150,6 +157,7 @@ size_t game_read(char* buf, size_t buf_size)
 size_t game_write(char* buf, size_t size)
 {
 	ssize_t ret;
+	char* log_buf;
 	pthread_mutex_lock(&fd_mutex);
 
 	if(running_flag) {
@@ -157,6 +165,13 @@ size_t game_write(char* buf, size_t size)
 		pthread_mutex_unlock(&fd_mutex);
 
 		if(ret > 0) {
+			//Write log
+			log_buf = malloc(ret + 1);
+			memcpy(log_buf, buf, ret);
+			*(log_buf + ret) = '\0';
+			printlog(LOG_SERVER, "%s", log_buf);
+			free(log_buf);
+
 			return ret;
 
 		} else {

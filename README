@@ -1,0 +1,24 @@
+本工具应当在Linux环境下使用
+安装说明:
+	首先要确保你的电脑上安装了libssh,然后进入软件包目录,用下面几条命令安装:
+	./configure
+	make all
+	sudo make install
+	当然,如果你会制作软件包,强烈建议你制作成软件包再安装.
+	然后用文本编辑器打开/etc/mcserverd.conf.
+	workdir要设置成minecraft server所在路径,command为运行minecraft server 所需
+的命令.剩下的选项和ssh登录,日志有关.
+
+使用说明:
+	直接在控制台输入sudo mcserverd手动启动或者添加开机启动项.本工具没有本地管理
+的界面,需要用ssh登录来管理.连接的端口号,用户名和密码在/etc/mcserverd.conf中.
+	日志记录在/var/log/mcserverd下.
+
+常用命令:
+	start		启动minecraft server.
+	username	修改ssh登录用户名.
+	passwd		修改ssh登录密码.
+	server		进入minecraft server模式,该模式下所有的命令会传递给minecraft
+server来处理.用命令exit来退出.
+	exit		退出登录或返回默认模式.
+	status		显示minecraft server的运行状态.

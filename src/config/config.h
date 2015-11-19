@@ -32,7 +32,6 @@ max_connection=5
 log-file-size=2MB
 log-file-num=10
 
-
 */
 
 #ifndef	CONFIG_H_INCLUDE
