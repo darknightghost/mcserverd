@@ -141,7 +141,7 @@ void printlog(int log, char* fmt, ...)
 
 	secs = time((time_t)0);
 	localtime_r(&secs, &st_tm);
-	time_size = fprintf(*p_fp, "[%d-%d-%d %d:%d:%d] ",
+	time_size = fprintf(*p_fp, "[%.2d-%.2d-%d %.2d:%.2d:%.2d] ",
 	                    st_tm.tm_mon,
 	                    st_tm.tm_mday,
 	                    st_tm.tm_year + 1900,

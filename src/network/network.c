@@ -395,6 +395,8 @@ void* send_thread(void* args)
 	size_t size;
 	struct timespec sleep_time;
 	psession_t p_session;
+	char* p_start;
+	char* p_end;
 
 	sleep_time.tv_sec = 0;
 	sleep_time.tv_nsec = 10;
@@ -422,7 +424,21 @@ void* send_thread(void* args)
 			}
 
 			p_session = (psession_t)queue_front(session_queue);
-			ssh_channel_write(p_session->channel, buf, size);
+
+			for(p_start = buf, p_end = buf;
+			    p_end - buf < size;
+			    p_end++) {
+				if(*p_end == '\n') {
+					ssh_channel_write(p_session->channel, p_start,
+					                  p_end - p_start);
+					ssh_channel_write(p_session->channel, "\r",
+					                  1);
+					p_start = p_end;
+				}
+			}
+
+			ssh_channel_write(p_session->channel, p_start,
+			                  p_end - p_start);
 			pthread_mutex_unlock(&mutex);
 		}
 

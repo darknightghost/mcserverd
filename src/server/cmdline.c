@@ -463,6 +463,7 @@ void cmd_server_server(int argc, char* argv[])
 
 void cmd_server_exit(int argc, char* argv[])
 {
+	printf("\n");
 	network_logoff();
 	UNREFERRED_PARAMETER(argc);
 	UNREFERRED_PARAMETER(argv);
