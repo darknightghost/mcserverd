@@ -391,6 +391,7 @@ void cmd_server_username(int argc, char* argv[])
 	char usrname[MAX_USERNAME_LEN + 5];
 
 	printf("New username:");
+	fflush(stdout);
 	fgets(usrname, MAX_USERNAME_LEN + 4, stdin);
 	*(usrname + strlen(usrname) - 1) = '\0';
 
@@ -423,6 +424,7 @@ void cmd_server_passwd(int argc, char* argv[])
 
 	//Get new password
 	printf("New password:");
+	fflush(stdout);
 	fgets(passwd, MAX_PASSWD_LEN + 4, stdin);
 	*(passwd + strlen(passwd) - 1) = '\0';
 
@@ -432,6 +434,7 @@ void cmd_server_passwd(int argc, char* argv[])
 	} else {
 		//Again
 		printf("\nRetype new password:");
+		fflush(stdout);
 		fgets(passwd_again, MAX_PASSWD_LEN + 4, stdin);
 		*(passwd_again + strlen(passwd_again) - 1) = '\0';
 
