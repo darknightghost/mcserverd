@@ -141,7 +141,7 @@ void cmdline_stop()
 
 	if(run_flag) {
 		run_flag = false;
-		write(pipe_stdin[FD_WRITE], "\r", 1);
+		pthread_cancel(cmd_thread_id);
 		pthread_join(cmd_thread_id, &ret);
 	}
 
@@ -153,14 +153,10 @@ size_t cmdline_read(char* buf, size_t buf_size)
 {
 	ssize_t ret;
 
-	if(run_flag) {
-		pthread_mutex_lock(&mutex);
-		ret = read(pipe_stdout[FD_READ], buf, buf_size);
-		pthread_mutex_unlock(&mutex);
+	ret = read(pipe_stdout[FD_READ], buf, buf_size);
 
-		if(ret >= 0) {
-			return ret;
-		}
+	if(ret >= 0) {
+		return ret;
 	}
 
 	return 0;
@@ -171,9 +167,7 @@ size_t cmdline_write(char* buf, size_t size)
 	ssize_t ret;
 
 	if(run_flag) {
-		pthread_mutex_lock(&mutex);
 		ret = write(pipe_stdin[FD_WRITE], buf, size);
-		pthread_mutex_unlock(&mutex);
 
 		if(ret >= 0) {
 			return ret;
@@ -348,6 +342,9 @@ void exec_server_cmd(int argc, char* argv[])
 
 	} else if(strcmp(argv[0], "status") == 0) {
 		cmd_server_status(argc, argv);
+
+	} else {
+		printf("Unknow command!\n");
 	}
 
 	UNREFERRED_PARAMETER(argc);

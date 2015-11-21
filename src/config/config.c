@@ -129,7 +129,7 @@ bool cfg_init()
 	if(len != 0) {
 		passwd = malloc(len);
 		ini_get_key_value(p_cfg_file, "ssh", "password",
-		                  username, len);
+		                  passwd, len);
 
 	}  else {
 		ini_close(p_cfg_file);
@@ -228,14 +228,14 @@ size_t cfg_get_mcserver_dir(char* buf, size_t buf_size)
 	size_t size;
 
 	pthread_mutex_lock(&mutex);
-	size = strlen(mcserver_cmd_line) + 1;
+	size = strlen(mcserver_dir) + 1;
 
 	if(buf_size < size) {
 		pthread_mutex_unlock(&mutex);
 		return size;
 
 	} else {
-		strcpy(buf, mcserver_cmd_line);
+		strcpy(buf, mcserver_dir);
 		pthread_mutex_unlock(&mutex);
 		return size;
 	}
@@ -246,14 +246,14 @@ size_t cfg_get_mcserver_cmd_line(char* buf, size_t buf_size)
 	size_t size;
 
 	pthread_mutex_lock(&mutex);
-	size = strlen(mcserver_dir) + 1;
+	size = strlen(mcserver_cmd_line) + 1;
 
 	if(buf_size < size) {
 		pthread_mutex_unlock(&mutex);
 		return size;
 
 	} else {
-		strcpy(buf, mcserver_dir);
+		strcpy(buf, mcserver_cmd_line);
 		pthread_mutex_unlock(&mutex);
 		return size;
 	}
@@ -377,7 +377,7 @@ size_t get_size(char* buf)
 	size = atoi(buf);
 
 	for(p = buf; *p != '\0'; p++) {
-		if(*p > '9' && *p < '0') {
+		if(*p > '9' || *p < '0') {
 			if(*p == 'G') {
 				size *= 1024 * 1024 * 1024;
 				break;

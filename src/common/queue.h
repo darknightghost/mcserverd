@@ -19,6 +19,7 @@
 #define	QUEUE_H_INCLUDE
 
 #include "list.h"
+#include <stdlib.h>
 
 typedef	list_t	queue_t, *pqueue_t;
 
@@ -36,10 +37,15 @@ typedef	list_t	queue_t, *pqueue_t;
         NULL,\
         (p_item))
 
-#define	queue_pop(queue)						((queue) == NULL\
-        ?NULL\
-        :((queue)->p_item,\
-          list_remove(&(queue), (queue))))
+#define	queue_pop(queue,_macro_ret)						({\
+		if((queue) == NULL){\
+			_macro_ret = NULL;\
+		}else{\
+			_macro_ret = (queue)->p_item;\
+			list_remove(&(queue),(queue));\
+		}\
+		_macro_ret;\
+	})
 
 #define	queue_destroy(queue,callback,p_args)	list_destroy(&(queue),\
         (callback),\

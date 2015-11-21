@@ -53,12 +53,16 @@ static	void				next_log(char* fmt, int* p_num);
 bool log_init()
 {
 	//Creat log directory
-	if(mkdir(LOG_DIR,
-	         S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH) != 0) {
+	if(mkdir(LOG_DIR, S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
 		if(errno != EEXIST) {
 			return false;
 		}
+
 	}
+
+	//Read config
+	max_size = cfg_get_log_file_size();
+	max_num = cfg_get_log_file_num();
 
 	//Open log file
 	ssh_fp = open_log_file(SSH_LOG_NAME, &ssh_log_num, &ssh_size);
@@ -73,10 +77,6 @@ bool log_init()
 		fclose(ssh_fp);
 		return false;
 	}
-
-	//Read config
-	max_size = cfg_get_log_file_size();
-	max_num = cfg_get_log_file_num();
 
 	//Initialize mutex
 	pthread_mutex_init(&ssh_mutex, NULL);
@@ -144,11 +144,12 @@ void printlog(int log, char* fmt, ...)
 	time_size = fprintf(*p_fp, "[%d-%d-%d %d:%d:%d] ",
 	                    st_tm.tm_mon,
 	                    st_tm.tm_mday,
-	                    st_tm.tm_year,
+	                    st_tm.tm_year + 1900,
 	                    st_tm.tm_hour,
 	                    st_tm.tm_min,
 	                    st_tm.tm_sec);
 	out_size = vfprintf(*p_fp, fmt, args);
+	fflush(*p_fp);
 
 	if(out_size > 0) {
 		(*p_size) += out_size;
@@ -216,6 +217,8 @@ FILE* open_log_file(char* fmt, int* p_num, size_t* p_size)
 
 	//Open file
 	ret = fopen(name, "a");
+
+	chmod(name, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 	if(ret != NULL) {
 		*p_size = ftell(ret);

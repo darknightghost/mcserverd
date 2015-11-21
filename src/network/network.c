@@ -37,7 +37,7 @@
 
 #define	MAX_TRY_TIME	5
 #define	SYS_RSA_KEY		"/etc/ssh/ssh_host_rsa_key"
-#define	WAIT_TEXT		"Other administrators has logged in,please wait until they logged off.\n"
+#define	WAIT_TEXT		"Other administrators has logged in,please wait until they logged off.\r\n"
 
 static	queue_t			session_queue;
 static	bool			run_flag;
@@ -123,6 +123,8 @@ int network_main()
 		return -1;
 	}
 
+	run_flag = true;
+
 	//Create gc thread
 	if(pthread_create(&gc_thread_id,
 	                  NULL, gc_thread, NULL) != 0) {
@@ -144,7 +146,6 @@ int network_main()
 	//Listen for new connection
 	ssh_bind_set_blocking(bind, 1);
 	printlog(LOG_CONN, "Start listen on port: %d\n", port);
-	run_flag = true;
 
 	while(run_flag) {
 		status = ssh_bind_listen(bind);
@@ -179,7 +180,12 @@ int network_main()
 
 		pthread_mutex_lock(&mutex);
 		queue_push(session_queue, p_session);
-		pthread_cond_signal(&cond);
+
+		if(p_session == queue_front(session_queue)) {
+			p_session->status = SESSION_ACTIVE;
+			server_refresh();
+		}
+
 		pthread_mutex_unlock(&mutex);
 	}
 
@@ -272,10 +278,16 @@ void* session_thread(void* args)
 
 	p_session = (psession_t)args;
 
+	memset(&(p_session->server_callbacks), 0,
+	       sizeof(struct ssh_server_callbacks_struct));
+	memset(&(p_session->channel_callbacks), 0,
+	       sizeof(struct ssh_channel_callbacks_struct));
+
 	p_session->server_callbacks.userdata = p_session;
 	p_session->server_callbacks.auth_password_function = conn_auth;
 	p_session->server_callbacks.channel_open_request_session_function = channel_open;
 
+	p_session->channel_callbacks.userdata = p_session;
 	p_session->channel_callbacks.channel_pty_request_function = pty_request;
 	p_session->channel_callbacks.channel_pty_window_change_function = NULL;
 	p_session->channel_callbacks.channel_shell_request_function = shell_request;
@@ -295,6 +307,7 @@ void* session_thread(void* args)
 	//Server callbacks
 	ssh_callbacks_init(&(p_session->server_callbacks));
 	ssh_callbacks_init(&(p_session->channel_callbacks));
+	ssh_set_server_callbacks(p_session->session, &(p_session->server_callbacks));
 
 	//Exchange key
 	status = ssh_handle_key_exchange(p_session->session);
@@ -421,39 +434,32 @@ void* send_thread(void* args)
 
 void* gc_thread(void* args)
 {
-	plist_node_t p_node;
-	plist_node_t p_next_node;
 	psession_t p_session;
 	pthread_mutex_lock(&mutex);
 	struct sockaddr addr;
 	socklen_t len;
 	int socket_fd;
+	void* macro_ret;
 
 	while(run_flag) {
 		//Suspend thread
 		pthread_cond_wait(&cond, &mutex);
 
 		//Release exited sessions
-		p_node = session_queue;
+		while(session_queue != NULL) {
+			p_session = (psession_t)queue_front(session_queue);
 
-		if(p_node != NULL) {
-			do {
-				p_session = (psession_t)(p_node->p_item);
+			if(p_session->status == SESSION_EXIT) {
+				p_session = (psession_t)queue_pop(session_queue, macro_ret);
+				session_free(p_session);
 
-				if(p_session->status == SESSION_EXIT) {
-					//Release the session
-					p_next_node = p_node->p_next;
-					list_remove(&session_queue, p_node);
-					pthread_join(p_session->thread, NULL);
-					session_free(p_session);
-					p_node = p_next_node;
-					continue;
-				}
+			} else {
+				break;
+			}
+		}
 
-				p_node = p_node->p_next;
-			} while(p_node != session_queue);
-
-			//Active first session
+		//Active first session
+		if(session_queue != NULL) {
 			p_session = (psession_t)queue_front(session_queue);
 
 			if(p_session->status == SESSION_WAITING) {

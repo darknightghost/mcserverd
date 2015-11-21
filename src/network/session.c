@@ -38,10 +38,11 @@ void session_free(psession_t p_session)
 {
 	if(p_session->channel != NULL) {
 		ssh_channel_free(p_session->channel);
-		ssh_event_free(p_session->event);
-		ssh_free(p_session->session);
-		free(p_session);
 	}
+
+	ssh_event_free(p_session->event);
+	ssh_free(p_session->session);
+	free(p_session);
 
 	return;
 }
