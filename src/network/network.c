@@ -492,6 +492,9 @@ void* gc_thread(void* args)
 				pthread_mutex_unlock(&socket_mutex);
 				server_refresh();
 			}
+
+		} else {
+			server_close_cmd();
 		}
 	}
 

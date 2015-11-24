@@ -53,6 +53,12 @@ void server_stop()
 	return;
 }
 
+void server_close_cmd()
+{
+	cmdline_stop();
+	return;
+}
+
 void server_refresh()
 {
 	cmdline_stop();
