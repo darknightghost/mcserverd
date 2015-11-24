@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
-#include <termios.h>
+#include <stdio_ext.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -26,6 +26,7 @@
 #include "cmdline.h"
 #include "game-server.h"
 #include "../network/network.h"
+#include "../log/log.h"
 
 #define	FD_READ		0
 #define	FD_WRITE	1
@@ -46,6 +47,8 @@ static	void				jump_space(char**p);
 static	void				exec_server_cmd(int argc, char* argv[]);
 static	void				exec_mc_cmd(char* cmd);
 
+static	char*				get_line_input(char* buf, size_t size, bool echo);
+
 //Commands
 static	void				cmd_server_start(int argc, char* argv[]);
 static	void				cmd_server_username(int argc, char* argv[]);
@@ -53,6 +56,7 @@ static	void				cmd_server_passwd(int argc, char* argv[]);
 static	void				cmd_server_server(int argc, char* argv[]);
 static	void				cmd_server_exit(int argc, char* argv[]);
 static	void				cmd_server_status(int argc, char* argv[]);
+static	void				cmd_server_exitserver(int argc, char* argv[]);
 
 static	void				cmd_mc_stop();
 static	void				cmd_mc_exit();
@@ -343,6 +347,9 @@ void exec_server_cmd(int argc, char* argv[])
 	} else if(strcmp(argv[0], "status") == 0) {
 		cmd_server_status(argc, argv);
 
+	} else if(strcmp(argv[0], "exitserver") == 0) {
+		cmd_server_exitserver(argc, argv);
+
 	} else {
 		printf("Unknow command!\n");
 	}
@@ -372,6 +379,45 @@ void exec_mc_cmd(char* cmd)
 	}
 }
 
+char* get_line_input(char* buf, size_t size, bool echo)
+{
+	size_t len_read;
+	char* p;
+
+
+	setbuf(stdin, NULL);
+	p = buf;
+	fread(p, 1, 1, stdin);
+
+	for(len_read = 0;
+	    len_read < size;
+	    len_read++, p++) {
+		fread(p, 1, 1, stdin);
+
+		if(*p == '\r' || *p == '\n') {
+			setbuf(stdin, NULL);
+			break;
+
+		} else if((*p < '0' || *p > '9')
+		          && (*p < 'a' || *p > 'z')
+		          && (*p < 'A' || *p > 'Z')) {
+			printf("\nUnknow character:%c!\n", *p);
+			return NULL;
+
+		} else if(echo) {
+			printf("%c", *p);
+			fflush(stdout);
+
+		}
+	}
+
+	*p = '\0';
+	printf("\n");
+	fflush(stdout);
+
+	return buf;
+}
+
 void cmd_server_start(int argc, char* argv[])
 {
 	if(game_start()) {
@@ -392,14 +438,18 @@ void cmd_server_username(int argc, char* argv[])
 
 	printf("New username:");
 	fflush(stdout);
-	fgets(usrname, MAX_USERNAME_LEN + 4, stdin);
-	*(usrname + strlen(usrname) - 1) = '\0';
+
+	if(get_line_input(usrname, MAX_USERNAME_LEN + 5, true) == NULL) {
+		printf("\n");
+		return;
+	}
 
 	if(strlen(usrname) > MAX_USERNAME_LEN) {
 		printf("The length of username must below %d!\n", MAX_USERNAME_LEN);
 
 	} else {
 		cfg_set_username(usrname);
+		printlog(LOG_CONN, "Username changed.\n");
 	}
 
 	UNREFERRED_PARAMETER(argc);
@@ -409,47 +459,39 @@ void cmd_server_username(int argc, char* argv[])
 
 void cmd_server_passwd(int argc, char* argv[])
 {
-	struct termios term;
 	char passwd[MAX_PASSWD_LEN + 5];
 	char passwd_again[MAX_PASSWD_LEN + 5];
-
-	//Disable echo
-	if(tcgetattr(STDIN_FILENO, &term) == -1) {
-		printf("Failed to get terminal attribute!\n");
-		return;
-	}
-
-	term.c_lflag &= ~ECHOFLAGS;
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 
 	//Get new password
 	printf("New password:");
 	fflush(stdout);
-	fgets(passwd, MAX_PASSWD_LEN + 4, stdin);
-	*(passwd + strlen(passwd) - 1) = '\0';
+
+	if(get_line_input(passwd, MAX_PASSWD_LEN + 5, false) == NULL) {
+		printf("\n");
+		return;
+	}
 
 	if(strlen(passwd) > MAX_PASSWD_LEN) {
 		printf("The length of password must below %d!\n", MAX_PASSWD_LEN);
 
 	} else {
 		//Again
-		printf("\nRetype new password:");
+		printf("Retype new password:");
 		fflush(stdout);
-		fgets(passwd_again, MAX_PASSWD_LEN + 4, stdin);
-		*(passwd_again + strlen(passwd_again) - 1) = '\0';
+
+		if(get_line_input(passwd_again, MAX_PASSWD_LEN + 5, false) == NULL) {
+			printf("\n");
+			return;
+		}
 
 		if(strcmp(passwd, passwd_again) == 0) {
 			cfg_set_passwd(passwd);
-			printf("\n");
+			printlog(LOG_CONN, "Password changed.\n");
 
 		} else {
 			printf("Sorry, passwords do not match.\n");
 		}
 	}
-
-	//Enable echo
-	term.c_lflag |= ECHOFLAGS;
-	tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
 
 	UNREFERRED_PARAMETER(argc);
 	UNREFERRED_PARAMETER(argv);
@@ -481,6 +523,17 @@ void cmd_server_status(int argc, char* argv[])
 	} else {
 		printf("Service stopped.\n");
 	}
+
+	UNREFERRED_PARAMETER(argc);
+	UNREFERRED_PARAMETER(argv);
+	return;
+}
+
+void cmd_server_exitserver(int argc, char* argv[])
+{
+	printf("\n");
+	game_stop();
+	network_quit();
 
 	UNREFERRED_PARAMETER(argc);
 	UNREFERRED_PARAMETER(argv);

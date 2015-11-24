@@ -22,3 +22,4 @@
 server来处理.用命令exit来退出.
 	exit		退出登录或返回默认模式.
 	status		显示minecraft server的运行状态.
+	exitserver	结束守护进程.

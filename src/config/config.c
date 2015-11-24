@@ -208,6 +208,7 @@ bool cfg_init()
 void cfg_destroy()
 {
 	if(p_cfg_file != NULL) {
+		cfg_write();
 		ini_close(p_cfg_file);
 		free(mcserver_cmd_line);
 		free(username);

@@ -100,6 +100,8 @@ int network_main()
 	action.sa_flags = 0;
 	sigaction(SIGCONT, &action, NULL);
 
+	printlog(LOG_CONN, "Starting ssh service...\n");
+
 	ssh_init();
 	bind = ssh_bind_new();
 
@@ -197,13 +199,14 @@ int network_main()
 	queue_destroy(session_queue, session_destroy_callback, NULL);
 	ssh_bind_free(bind);
 	ssh_finalize();
+	printlog(LOG_CONN, "ssh service stopped.\n");
 	return 0;
 }
 
 void network_quit()
 {
 	run_flag = false;
-	pthread_kill(SIGCONT, main_thread);
+	pthread_kill(main_thread, SIGCONT);
 	pthread_cancel(gc_thread_id);
 	pthread_cancel(send_thread_id);
 	return;
@@ -534,7 +537,13 @@ int conn_receive(ssh_session session, ssh_channel channel,
 	p_session = (psession_t)userdata;
 
 	if(p_session->status == SESSION_ACTIVE) {
-		server_write(data, len);
+		if(*((char*)data) == '\r') {
+			server_write("\n", 2);
+
+		} else {
+			server_write(data, len);
+		}
+
 
 	} else {
 		ssh_channel_write(channel, WAIT_TEXT, sizeof(WAIT_TEXT) - 1);
