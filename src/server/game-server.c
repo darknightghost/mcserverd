@@ -111,7 +111,9 @@ void game_stop()
 
 	if(running_flag) {
 		running_flag = false;
-		write(pipe_input[FD_WRITE], "\n/stop\n", 6);
+		write(pipe_input[FD_WRITE], "\n", 1);
+		sleep(1);
+		write(pipe_input[FD_WRITE], "stop\n", 5);
 		pthread_join(wait_thread_id, &p_null);
 	}
 
@@ -130,21 +132,19 @@ size_t game_read(char* buf, size_t buf_size)
 	ssize_t ret;
 	char* log_buf;
 
-	if(running_flag) {
-		ret = read(pipe_output[FD_READ], buf, buf_size);
+	ret = read(pipe_output[FD_READ], buf, buf_size);
 
-		if(ret > 0) {
-			//Write log
-			log_buf = malloc(ret + 1);
-			memcpy(log_buf, buf, ret);
-			*(log_buf + ret) = '\0';
-			printlog(LOG_SERVER, "%s", log_buf);
-			free(log_buf);
-			return ret;
+	if(ret > 0) {
+		//Write log
+		log_buf = malloc(ret + 1);
+		memcpy(log_buf, buf, ret);
+		*(log_buf + ret) = '\0';
+		printlog(LOG_SERVER, "%s", log_buf);
+		free(log_buf);
+		return ret;
 
-		} else {
-			return 0;
-		}
+	} else {
+		return 0;
 	}
 
 	return 0;

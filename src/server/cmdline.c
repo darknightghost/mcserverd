@@ -61,7 +61,6 @@ static	void				cmd_server_exit(int argc, char* argv[]);
 static	void				cmd_server_status(int argc, char* argv[]);
 static	void				cmd_server_exitserver(int argc, char* argv[]);
 
-static	void				cmd_mc_stop();
 static	void				cmd_mc_exit();
 
 bool cmdline_init()
@@ -203,7 +202,7 @@ void* cmdline_thread(void* args)
 
 	while(run_flag) {
 		if(mc_mode) {
-			cmd = readline("\nminecraft> ");
+			cmd = readline("");
 
 		} else {
 			cmd = readline("server> ");
@@ -383,6 +382,9 @@ void exec_server_cmd(int argc, char* argv[])
 	} else if(strcmp(argv[0], "exitserver") == 0) {
 		cmd_server_exitserver(argc, argv);
 
+	} else if(strcmp(argv[0], "stop") == 0) {
+		game_stop();
+
 	} else {
 		printf("Unknow command!\n");
 	}
@@ -398,8 +400,8 @@ void exec_mc_cmd(char* cmd)
 	size_t written;
 	char* log_buf;
 
-	if(strcmp("/stop", cmd) == 0) {
-		cmd_mc_stop();
+	if(strcmp("stop", cmd) == 0 || strcmp("/stop", cmd) == 0) {
+		printf("Stop command is banned!\n");
 
 	} else if(strcmp("exit", cmd) == 0) {
 		cmd_mc_exit();
@@ -581,12 +583,6 @@ void cmd_server_exitserver(int argc, char* argv[])
 
 	UNREFERRED_PARAMETER(argc);
 	UNREFERRED_PARAMETER(argv);
-	return;
-}
-
-void cmd_mc_stop()
-{
-	game_stop();
 	return;
 }
 

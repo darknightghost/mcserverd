@@ -38,6 +38,7 @@
 #define	MAX_TRY_TIME	5
 #define	SYS_RSA_KEY		"/etc/ssh/ssh_host_rsa_key"
 #define	WAIT_TEXT		"Other administrators has logged in,please wait until they logged off.\r\n"
+#define	URGENCY_TEXT	"\r\nOther administrators are waitting for you!\r\n"
 
 static	queue_t			session_queue;
 static	bool			run_flag;
@@ -549,7 +550,16 @@ int conn_receive(ssh_session session, ssh_channel channel,
 
 
 	} else {
+		pthread_mutex_lock(&mutex);
 		ssh_channel_write(channel, WAIT_TEXT, sizeof(WAIT_TEXT) - 1);
+		p_session = (psession_t)(session_queue->p_item);
+
+		if(p_session->status == SESSION_ACTIVE) {
+			ssh_channel_write(p_session->channel, URGENCY_TEXT,
+			                  sizeof(URGENCY_TEXT) - 1);
+		}
+
+		pthread_mutex_unlock(&mutex);
 	}
 
 	UNREFERRED_PARAMETER(session);
