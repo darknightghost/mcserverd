@@ -66,6 +66,7 @@ static	void*			session_thread(void* args);
 static	void*			send_thread(void* args);
 static	void*			gc_thread(void* args);
 static	void			sigroutine(int dunno);
+static	void			sigterm(int dunno);
 
 void network_init()
 {
@@ -91,6 +92,7 @@ int network_main()
 	ssh_bind bind;
 	int port;
 	struct sigaction action;
+	struct sigaction term_action;
 	int status;
 
 	main_thread = pthread_self();
@@ -100,6 +102,12 @@ int network_main()
 	sigemptyset(&action.sa_mask);
 	action.sa_flags = 0;
 	sigaction(SIGCONT, &action, NULL);
+
+	//Setup awake signal
+	term_action.sa_handler = sigterm;
+	sigemptyset(&term_action.sa_mask);
+	term_action.sa_flags = 0;
+	sigaction(SIGTERM, &term_action, NULL);
 
 	printlog(LOG_CONN, "Starting ssh service...\n");
 
@@ -567,6 +575,13 @@ int conn_receive(ssh_session session, ssh_channel channel,
 
 void sigroutine(int dunno)
 {
+	UNREFERRED_PARAMETER(dunno);
+	return;
+}
+
+void sigterm(int dunno)
+{
+	network_quit();
 	UNREFERRED_PARAMETER(dunno);
 	return;
 }
