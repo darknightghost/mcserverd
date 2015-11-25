@@ -279,6 +279,7 @@ void* session_thread(void* args)
 	int socket_fd;
 	socklen_t len;
 	int status;
+	char ip_buf[17];
 
 	p_session = (psession_t)args;
 
@@ -304,8 +305,9 @@ void* session_thread(void* args)
 	len = sizeof(addr);
 	getpeername(socket_fd, &addr, &len);
 	pthread_mutex_lock(&socket_mutex);
+	strcpy(ip_buf, inet_ntoa(((struct sockaddr_in*)(&addr))->sin_addr));
 	printlog(LOG_CONN, "Host %s has been accepted.\n",
-	         inet_ntoa(*(struct in_addr*)(&addr)));
+	         ip_buf);
 	pthread_mutex_unlock(&socket_mutex);
 
 	//Server callbacks
@@ -341,10 +343,8 @@ void* session_thread(void* args)
 	while(!p_session->authed
 	      || p_session->channel == NULL) {
 		if(ssh_event_dopoll(p_session->event, -1) == SSH_ERROR) {
-			pthread_mutex_lock(&socket_mutex);
 			printlog(LOG_CONN, "Connection to %s has been lost.\n",
-			         inet_ntoa(*(struct in_addr*)(&addr)));
-			pthread_mutex_unlock(&socket_mutex);
+			         ip_buf);
 			pthread_mutex_lock(&mutex);
 			p_session->status = SESSION_EXIT;
 			pthread_cond_signal(&cond);
@@ -353,10 +353,8 @@ void* session_thread(void* args)
 		}
 
 		if(!p_session->tried_time > MAX_TRY_TIME) {
-			pthread_mutex_lock(&socket_mutex);
 			printlog(LOG_CONN, "Host %s has tried too much times.\n",
-			         inet_ntoa(*(struct in_addr*)(&addr)));
-			pthread_mutex_unlock(&socket_mutex);
+			         ip_buf);
 			pthread_mutex_lock(&mutex);
 			p_session->status = SESSION_EXIT;
 			pthread_cond_signal(&cond);
@@ -381,10 +379,8 @@ void* session_thread(void* args)
 		}
 	}
 
-	pthread_mutex_lock(&socket_mutex);
 	printlog(LOG_CONN, "Host %s has logged off.\n",
-	         inet_ntoa(*(struct in_addr*)(&addr)));
-	pthread_mutex_unlock(&socket_mutex);
+	         ip_buf);
 	pthread_mutex_lock(&mutex);
 	p_session->status = SESSION_EXIT;
 	pthread_cond_signal(&cond);
@@ -489,7 +485,7 @@ void* gc_thread(void* args)
 				getpeername(socket_fd, &addr, &len);
 				pthread_mutex_lock(&socket_mutex);
 				printlog(LOG_CONN, "Host %s actived.\n",
-				         inet_ntoa(*(struct in_addr*)(&addr)));
+				         inet_ntoa(((struct sockaddr_in*)(&addr))->sin_addr));
 				pthread_mutex_unlock(&socket_mutex);
 				server_refresh();
 			}

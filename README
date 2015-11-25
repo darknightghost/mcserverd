@@ -16,10 +16,11 @@
 
 常用命令:
 	start		启动minecraft server.
+	stop		停止minecraft server.
 	username	修改ssh登录用户名.
 	passwd		修改ssh登录密码.
 	server		进入minecraft server模式,该模式下所有的命令会传递给minecraft
-server来处理.用命令exit来退出.
+server来处理.用命令exit来退出,minecraft server的stop命令会被系统拦截.
 	exit		退出登录或返回默认模式.
 	status		显示minecraft server的运行状态.
 	exitserver	结束守护进程.
