@@ -37,10 +37,10 @@ static	int					pipe_stdin[2];
 static	int					pipe_stdout[2];
 static	bool				run_flag = false;
 static	pthread_t			cmd_thread_id;
+static	pthread_t			read_thread_id;
 static	pthread_mutex_t		mutex;
 static	bool				mc_mode;
 
-static	void*				cmdline_thread(void* args);
 static	bool				execute_command(char* cmd);
 static	char**				analyse_command(char* cmd, int* p_argc);
 static	void				jump_space(char**p);
@@ -48,6 +48,9 @@ static	void				exec_server_cmd(int argc, char* argv[]);
 static	void				exec_mc_cmd(char* cmd);
 
 static	char*				get_line_input(char* buf, size_t size, bool echo);
+
+static	void*				cmdline_thread(void* args);
+static	void*				read_thread(void* args);
 
 //Commands
 static	void				cmd_server_start(int argc, char* argv[]);
@@ -104,12 +107,25 @@ bool cmdline_init()
 
 	run_flag = false;
 	pthread_mutex_init(&mutex, NULL);
+
+	if(pthread_create(&read_thread_id, NULL, read_thread, NULL) != 0) {
+		close(pipe_stdin[0]);
+		close(pipe_stdin[1]);
+		close(pipe_stdout[0]);
+		close(pipe_stdout[1]);
+		pthread_mutex_destroy(&mutex);
+
+		return false;
+	}
+
 	return true;
 }
 
 void cmdline_destroy()
 {
 	cmdline_stop();
+	pthread_cancel(read_thread_id);
+	pthread_join(read_thread_id, NULL);
 	close(pipe_stdin[0]);
 	close(pipe_stdin[1]);
 	close(pipe_stdout[0]);
@@ -140,13 +156,12 @@ bool cmdline_start()
 
 void cmdline_stop()
 {
-	void* ret;
 	pthread_mutex_lock(&mutex);
 
 	if(run_flag) {
 		run_flag = false;
 		pthread_cancel(cmd_thread_id);
-		pthread_join(cmd_thread_id, &ret);
+		pthread_join(cmd_thread_id, NULL);
 	}
 
 	pthread_mutex_unlock(&mutex);
@@ -200,6 +215,24 @@ void* cmdline_thread(void* args)
 		}
 
 		free(cmd);
+	}
+
+	UNREFERRED_PARAMETER(args);
+	return NULL;
+}
+
+void* read_thread(void* args)
+{
+	char buf[4096];
+	size_t len;
+
+	while(1) {
+		len = game_read(buf, 4096);
+
+		if(len > 0 && run_flag) {
+			fwrite(buf, 1, len, stdout);
+			fflush(stdout);
+		}
 	}
 
 	UNREFERRED_PARAMETER(args);
@@ -363,8 +396,9 @@ void exec_mc_cmd(char* cmd)
 {
 	size_t len;
 	size_t written;
+	char* log_buf;
 
-	if(strcmp("stop", cmd) == 0) {
+	if(strcmp("/stop", cmd) == 0) {
 		cmd_mc_stop();
 
 	} else if(strcmp("exit", cmd) == 0) {
@@ -376,6 +410,16 @@ void exec_mc_cmd(char* cmd)
 		for(written = 0; written < len;) {
 			written += game_write(cmd + written, len - written);
 		}
+
+		game_write("\n", 1);
+
+		//Write log
+		log_buf = malloc(len + 2);
+		memcpy(log_buf, cmd, len);
+		*(log_buf + len) = '\n';
+		*(log_buf + len + 1) = '\0';
+		printlog(LOG_SERVER, "%s", log_buf);
+		free(log_buf);
 	}
 }
 
