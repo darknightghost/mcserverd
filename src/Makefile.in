@@ -162,7 +162,7 @@ AWK = @AWK@
 CC = @CC@
 CCDEPMODE = @CCDEPMODE@
 CFLAGS = -O2 -g -Wno-unused-result \
-		 -Wall -Werror -Wunused-parameter
+		 -Werror -Wall -Wunused-parameter
 
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
