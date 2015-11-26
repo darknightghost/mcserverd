@@ -36,7 +36,7 @@
 #define	FD_READ		0
 #define	FD_WRITE	1
 
-static	bool				running_flag = false;
+static volatile	bool		running_flag = false;
 static	int					pipe_input[2];
 static	int					pipe_output[2];
 static	char				server_dir[PATH_MAX];

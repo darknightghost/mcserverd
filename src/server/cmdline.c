@@ -35,7 +35,7 @@
 
 static	int					pipe_stdin[2];
 static	int					pipe_stdout[2];
-static	bool				run_flag = false;
+static volatile	bool		run_flag = false;
 static	pthread_t			cmd_thread_id;
 static	pthread_t			read_thread_id;
 static	pthread_mutex_t		mutex;

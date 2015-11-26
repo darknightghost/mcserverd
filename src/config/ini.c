@@ -218,7 +218,7 @@ bool ini_sync(pini_file_info_t p_file)
 				p_comment = p_sec_node->p_item;
 				fprintf(p_file->fp, ";%s\n", p_comment->comment);
 
-			} else if(p_key->line.type == INI_LINE_BLANK) {
+			} else if(p_section->line.type == INI_LINE_BLANK) {
 				fprintf(p_file->fp, "\n");
 			}
 

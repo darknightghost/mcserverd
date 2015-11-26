@@ -40,14 +40,14 @@
 #define	WAIT_TEXT		"Other administrators has logged in,please wait until they logged off.\r\n"
 #define	URGENCY_TEXT	"\r\nOther administrators are waitting for you!\r\n"
 
-static	queue_t			session_queue;
-static	bool			run_flag;
-static	pthread_mutex_t	mutex;
-static	pthread_mutex_t	socket_mutex;
-static	pthread_t		gc_thread_id;
-static	pthread_t		send_thread_id;
-static	pthread_cond_t	cond;
-static	pthread_t		main_thread;
+static queue_t			session_queue;
+static volatile	bool	run_flag;
+static pthread_mutex_t	mutex;
+static pthread_mutex_t	socket_mutex;
+static pthread_t		gc_thread_id;
+static pthread_t		send_thread_id;
+static pthread_cond_t	cond;
+static pthread_t		main_thread;
 
 static	void			session_destroy_callback(void* p_item, void* args);
 static	int				pty_request(ssh_session session, ssh_channel channel,
@@ -282,7 +282,7 @@ ssh_channel channel_open(ssh_session session, void *userdata)
 
 void* session_thread(void* args)
 {
-	psession_t p_session;
+	volatile psession_t p_session;
 	struct sockaddr addr;
 	int socket_fd;
 	socklen_t len;
@@ -361,6 +361,7 @@ void* session_thread(void* args)
 		}
 
 		if(!p_session->tried_time > MAX_TRY_TIME) {
+			__asm__ __volatile__("":::"memory");
 			printlog(LOG_CONN, "Host %s has tried too much times.\n",
 			         ip_buf);
 			pthread_mutex_lock(&mutex);
@@ -458,7 +459,7 @@ void* send_thread(void* args)
 
 void* gc_thread(void* args)
 {
-	psession_t p_session;
+	volatile psession_t p_session;
 	pthread_mutex_lock(&mutex);
 	struct sockaddr addr;
 	socklen_t len;
