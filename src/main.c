@@ -47,15 +47,9 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	if(lockf(lock_fd, F_TLOCK, 0) != 0) {
-		close(lock_fd);
-		return 0;
-	}
-
 	//Load config file
 	if(!cfg_init()) {
 		printf("Failed to load config file!\n");
-		lockf(lock_fd, F_ULOCK, 0);
 		close(lock_fd);
 		return -1;
 	}
@@ -64,7 +58,6 @@ int main(int argc, char* argv[])
 	if(!log_init()) {
 		printf("Failed to initialize logging!\n");
 		cfg_destroy();
-		lockf(lock_fd, F_ULOCK, 0);
 		close(lock_fd);
 		return -1;
 	}
@@ -74,9 +67,16 @@ int main(int argc, char* argv[])
 		printf("Failed to run in background!\n");
 		log_close();
 		cfg_destroy();
-		lockf(lock_fd, F_ULOCK, 0);
 		close(lock_fd);
 		return -1;
+	}
+
+	//Lock
+	if(lockf(lock_fd, F_TLOCK, 0) != 0) {
+		log_close();
+		cfg_destroy();
+		close(lock_fd);
+		return 0;
 	}
 
 	//Initialize server

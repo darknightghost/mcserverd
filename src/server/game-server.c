@@ -222,6 +222,8 @@ void exec_command(char* cmd)
 	char* buf;
 	char* p;
 	char** p_args;
+	char* server_path;
+	size_t len;
 
 	//Copy command
 	buf = malloc(strlen(cmd) + 1);
@@ -261,7 +263,11 @@ void exec_command(char* cmd)
 	*p_args = NULL;
 
 	//Set privilege
-	set_privilege(buf);
+	len = cfg_get_mcserver_path(NULL, 0);
+	server_path = malloc(len);
+	cfg_get_mcserver_path(server_path, len);
+	set_privilege(server_path);
+	free(server_path);
 
 	execvp(buf, args);
 	return;

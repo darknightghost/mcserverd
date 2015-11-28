@@ -55,6 +55,7 @@ bool				cfg_write();
 //Server command line
 size_t				cfg_get_mcserver_dir(char* buf, size_t buf_size);
 size_t				cfg_get_mcserver_cmd_line(char* buf, size_t buf_size);
+size_t				cfg_get_mcserver_path(char* buf, size_t buf_size);
 
 //SSH port
 unsigned short		cfg_get_port();

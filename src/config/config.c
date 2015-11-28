@@ -28,6 +28,7 @@
 
 static	char*				mcserver_dir = NULL;
 static	char*				mcserver_cmd_line = NULL;
+static	char*				server_file = NULL;
 static	unsigned short		port;
 static	char*				username;
 static	char*				passwd;
@@ -71,6 +72,18 @@ bool cfg_init()
 	mcserver_dir = malloc(len);
 	ini_get_key_value(p_cfg_file, "minecraft", "workdir",
 	                  mcserver_dir, len);
+
+	//Server file
+	len = ini_get_key_value(p_cfg_file, "minecraft", "server-file", NULL, 0);
+
+	if(len == 0) {
+		ini_close(p_cfg_file);
+		return false;
+	}
+
+	server_file = malloc(len);
+	ini_get_key_value(p_cfg_file, "minecraft", "server-file",
+	                  server_file, len);
 
 	//Sever command line
 	len = ini_get_key_value(p_cfg_file, "minecraft", "command", NULL, 0);
@@ -255,6 +268,23 @@ size_t cfg_get_mcserver_cmd_line(char* buf, size_t buf_size)
 
 	} else {
 		strcpy(buf, mcserver_cmd_line);
+		pthread_mutex_unlock(&mutex);
+		return size;
+	}
+}
+size_t cfg_get_mcserver_path(char* buf, size_t buf_size)
+{
+	size_t size;
+
+	pthread_mutex_lock(&mutex);
+	size = strlen(server_file) + 1;
+
+	if(buf_size < size) {
+		pthread_mutex_unlock(&mutex);
+		return size;
+
+	} else {
+		strcpy(buf, server_file);
 		pthread_mutex_unlock(&mutex);
 		return size;
 	}
